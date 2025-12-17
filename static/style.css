@@ -1,0 +1,5 @@
+body { font-family: sans-serif; padding: 20px; }
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 8px; text-align: left; }
+input { width: 100%; padding: 4px; }
+button { padding: 8px 12px; margin: 5px; }
