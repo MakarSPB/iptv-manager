@@ -3,6 +3,9 @@ venv/
 env/
 .venv/
 virtualenv/
+.gigaide
+.idea
+*.iml
 
 # === Python ===
 __pycache__/
@@ -59,7 +62,3 @@ Thumbs.db
 storage/playlists/*
 !.gitkeep
 
-# === Артефакты сборки ===
-*.egg-info/
-dist/
-build/
