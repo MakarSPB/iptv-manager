@@ -37,45 +37,50 @@
             background-color: #f8f9fa;
         }
         .btn {
-            padding: 5px 10px;
+            padding: 6px 12px;
             margin: 2px;
             font-size: 14px;
             cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
         .btn-edit {
             background-color: #007bff;
             color: white;
-            border: none;
-            border-radius: 3px;
         }
-        .btn-delete {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 3px;
+        .btn-edit:hover {
+            background-color: #0056b3;
         }
         .btn-download {
             background-color: #28a745;
             color: white;
-            border: none;
-            border-radius: 3px;
+        }
+        .btn-download:hover {
+            background-color: #1e7e34;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
         }
         .empty {
             color: #6c757d;
             font-style: italic;
         }
-        .actions {
-            display: flex;
-            gap: 5px;
-        }
     </style>
 </head>
 <body>
-<!-- Навигационное меню -->
 <nav>
-    <div class="logo">
-        <strong>IPTV Manager</strong>
-    </div>
+    <div class="logo"><strong>IPTV Manager</strong></div>
     <div class="links">
         <a href="/">Главная</a>
         <a href="/upload">Загрузить</a>
@@ -85,7 +90,6 @@
     </div>
 </nav>
 
-<!-- Основное содержимое -->
 <div class="container">
     <h1>📁 Мои плейлисты</h1>
 
@@ -107,7 +111,6 @@
             <td>{{ pl.filename }}</td>
             <td class="actions">
                 <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
-                <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a>
                 <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
                 <button class="btn btn-delete" onclick="deletePlaylist('{{ pl.id }}')">Удалить</button>
             </td>
@@ -119,7 +122,7 @@
     <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
     {% endif %}
 
-    <a href="/upload" class="btn btn-primary">Загрузить новый плейлист</a>
+    <a href="/upload" class="btn btn-edit">Загрузить новый плейлист</a>
 </div>
 
 <script>
@@ -128,16 +131,12 @@
             const res = await fetch(`/playlists/${id}/edit`);
             const data = await res.json();
 
-            // Сохраняем текущий ID в сессии
-            sessionStorage.setItem('currentPlaylistId', id);
-
-            // Переходим к главной, где будет редактор
-            window.location.href = '/';
-
-            // Через небольшую задержку загружаем данные
-            setTimeout(() => {
-                window.postMessage({ action: 'loadPlaylist', data: data }, '*');
-            }, 500);
+            window.currentPlaylistId = id;
+            window.channels = data.channels;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels(channels);
+            document.getElementById('editor').style.display = 'block';
         } catch (err) {
             alert('Ошибка загрузки плейлиста: ' + err.message);
         }
@@ -161,19 +160,6 @@
             alert('Ошибка удаления: ' + err.message);
         }
     }
-
-    // Обработка сообщений для загрузки плейлиста в редактор
-    window.addEventListener('message', (event) => {
-        if (event.data.action === 'loadPlaylist') {
-            const data = event.data.data;
-            currentPlaylistId = data.id;
-            channels = data.channels;
-            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
-            document.getElementById('save-name').value = data.name || 'Без названия';
-            renderChannels(channels);
-            document.getElementById('editor').style.display = 'block';
-        }
-    });
 </script>
 </body>
 </html>

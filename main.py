@@ -97,6 +97,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "playlists": playlists
         }
     )
+
 @app.get("/playlists", response_class=HTMLResponse)
 async def my_playlists(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -112,7 +113,6 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
             "playlists": playlists
         }
     )
-
 
 @app.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, db: Session = Depends(get_db)):
@@ -155,13 +155,13 @@ async def upload_playlist(
         raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
 
     return {"channels": channels}
+
 @app.get("/playlists/{playlist_id}/edit")
 async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
         raise HTTPException(status_code=404, detail="Плейлист не найден")
 
-    # Парсим содержимое M3U
     try:
         channels = parse_m3u(playlist.content)
         return {
@@ -196,7 +196,6 @@ async def update_playlist(
 
     return {"message": "Плейлист обновлён", "url": f"/playlists/{playlist_id}.m3u"}
 
-# === Удаление плейлиста ===
 @app.delete("/playlists/{playlist_id}")
 async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
@@ -207,7 +206,6 @@ async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user:
     db.commit()
     return {"message": "Плейлист удалён"}
 
-# === Сохранение плейлиста ===
 @app.post("/save", response_class=JSONResponse)
 async def save_playlist(
         data: dict,
@@ -218,7 +216,6 @@ async def save_playlist(
     channels = data.get("channels", [])
 
     playlist_id = generate_short_id(5)
-    # Проверяем уникальность ID
     while db.query(Playlist).filter(Playlist.id == playlist_id).first():
         playlist_id = generate_short_id(5)
 
@@ -237,7 +234,6 @@ async def save_playlist(
     url = f"/playlists/{playlist_id}.m3u"
     return {"message": "Сохранено", "url": url}
 
-# === Отдача плейлиста ===
 @app.get("/playlists/{playlist_id}.m3u")
 async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
@@ -245,7 +241,6 @@ async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Плейлист не найден")
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
-# === Запуск сервера ===
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",

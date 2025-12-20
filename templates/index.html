@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPTV Manager</title>
+    <title>Главная</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
         nav {
@@ -23,34 +23,64 @@
         .container {
             padding: 20px;
         }
-        #editor {
-            display: none;
-            margin-top: 20px;
-        }
         table {
             border-collapse: collapse;
             width: 100%;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
+            margin: 20px 0;
         }
         th, td {
-            padding: 8px;
+            border: 1px solid #ccc;
+            padding: 10px;
             text-align: left;
         }
+        th {
+            background-color: #f8f9fa;
+        }
         .btn {
-            padding: 5px 10px;
+            padding: 6px 12px;
             margin: 2px;
             font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-edit {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-edit:hover {
+            background-color: #0056b3;
+        }
+        .btn-download {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-download:hover {
+            background-color: #1e7e34;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .empty {
+            color: #6c757d;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-<!-- Навигационное меню -->
 <nav>
-    <div class="logo">
-        <strong>IPTV Manager</strong>
-    </div>
+    <div class="logo"><strong>IPTV Manager</strong></div>
     <div class="links">
         <a href="/">Главная</a>
         <a href="/upload">Загрузить</a>
@@ -60,40 +90,44 @@
     </div>
 </nav>
 
-<!-- Основное содержимое -->
 <div class="container">
     <h1>🎥 Добро пожаловать, <strong>{{ user.username }}</strong>!</h1>
 
     <h2>📁 Мои плейлисты</h2>
+    {% if playlists %}
     <table>
+        <thead>
         <tr>
             <th>ID</th>
             <th>Название</th>
             <th>Файл</th>
             <th>Действия</th>
         </tr>
+        </thead>
+        <tbody>
         {% for pl in playlists %}
         <tr>
             <td>{{ pl.id }}</td>
             <td>{{ pl.name }}</td>
             <td>{{ pl.filename }}</td>
-            <td>
-                <button class="btn" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
-                <a class="btn" href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a>
-                <a class="btn" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+            <td class="actions">
+                <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
+                <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+                <button class="btn btn-delete" onclick="deletePlaylist('{{ pl.id }}')">Удалить</button>
             </td>
         </tr>
-        {% else %}
-        <tr><td colspan="4">Пока нет плейлистов</td></tr>
         {% endfor %}
+        </tbody>
     </table>
+    {% else %}
+    <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
+    {% endif %}
 
     <hr>
     <h2>📤 Загрузить новый плейлист</h2>
     <input type="file" id="file" accept=".m3u,.m3u8">
-    <button class="btn" onclick="upload()">Загрузить</button>
+    <button class="btn btn-edit" onclick="upload()">Загрузить</button>
 
-    <!-- Редактор плейлиста -->
     <div id="editor" style="display:none; margin-top:20px;">
         <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
         <table id="channel-table">
@@ -106,8 +140,8 @@
             </tr>
         </table>
         <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
-        <button class="btn" onclick="save()">Сохранить</button>
-        <button class="btn" onclick="cancelEdit()">Отмена</button>
+        <button class="btn btn-edit" onclick="save()">Сохранить</button>
+        <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
         <p id="result-url"></p>
     </div>
 </div>
@@ -116,7 +150,6 @@
     let currentPlaylistId = null;
     let channels = [];
 
-    // Загрузка нового файла
     async function upload() {
         const input = document.getElementById('file');
         const file = input.files[0];
@@ -131,7 +164,7 @@
         });
         const data = await res.json();
 
-        currentPlaylistId = null; // Новый плейлист
+        currentPlaylistId = null;
         channels = data.channels;
         document.getElementById('playlist-name').textContent = file.name;
         document.getElementById('save-name').value = file.name.replace('.m3u', '').replace('.m3u8', '');
@@ -139,7 +172,6 @@
         document.getElementById('editor').style.display = 'block';
     }
 
-    // Редактирование существующего плейлиста
     async function editPlaylist(id) {
         try {
             const res = await fetch(`/playlists/${id}/edit`);
@@ -156,7 +188,25 @@
         }
     }
 
-    // Отображение каналов в таблице
+    async function deletePlaylist(id) {
+        if (!confirm('Вы уверены, что хотите удалить этот плейлист?')) return;
+
+        try {
+            const res = await fetch(`/playlists/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert('Ошибка: ' + data.detail);
+            }
+        } catch (err) {
+            alert('Ошибка удаления: ' + err.message);
+        }
+    }
+
     function renderChannels(chs) {
         const table = document.getElementById('channel-table');
         while (table.rows.length > 1) table.deleteRow(1);
@@ -167,30 +217,26 @@
                 <td><input value="${escapeHtml(ch.tvg_logo || '')}" size="10" style="width: 100%"></td>
                 <td><input value="${escapeHtml(ch.group_title || '')}" size="10" style="width: 100%"></td>
                 <td><input value="${escapeHtml(ch.url)}" size="20" style="width: 100%"></td>
-                <td><button class="btn" onclick="removeRow(this)">❌</button></td>
+                <td><button class="btn btn-delete" onclick="removeRow(this)">❌</button></td>
             `;
         });
     }
 
-    // Удаление строки
     function removeRow(btn) {
         btn.closest('tr').remove();
     }
 
-    // Отмена редактирования
     function cancelEdit() {
         document.getElementById('editor').style.display = 'none';
         document.getElementById('file').value = '';
     }
 
-    // Экранирование HTML
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // Сохранение плейлиста
     async function save() {
         const name = document.getElementById('save-name').value || 'Мой плейлист';
         const table = document.getElementById('channel-table');
@@ -221,7 +267,6 @@
             document.getElementById('result-url').innerHTML =
                 `🔗 Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
 
-            // Обновляем страницу через 2 секунды
             setTimeout(() => {
                 location.reload();
             }, 2000);
