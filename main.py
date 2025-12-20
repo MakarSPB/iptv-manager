@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 import os
 import uuid
 import jwt
+from jose import jwt
 from datetime import timedelta
 from typing import List
 
