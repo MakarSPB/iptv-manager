@@ -1,92 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPTV Playlist Manager</title>
+    <title>Главная</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>📁 Загрузите ваш M3U плейлист</h1>
-    <input type="file" id="file" accept=".m3u,.m3u8">
-    <button onclick="upload()">Загрузить</button>
-    <div id="editor" style="display:none; margin-top:20px;">
-        <h2>Редактирование каналов</h2>
-        <table id="channel-table" border="1">
-            <tr><th>Имя</th><th>Логотип</th><th>Группа</th><th>URL</th><th>Удалить</th></tr>
-        </table>
-        <button onclick="save()">Сохранить плейлист</button>
-        <p id="result-url"></p>
-    </div>
+<h1>🎥 IPTV Playlist Manager</h1>
+<p>Привет, <strong>{{ user.username }}</strong>! <a href="/logout">Выход</a></p>
 
-    <script>
-        let playlistId = null;
+<h2>📁 Мои плейлисты</h2>
+<table border="1" width="100%">
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Файл</th>
+        <th>Действия</th>
+    </tr>
+    {% for pl in playlists %}
+    <tr>
+        <td>{{ pl.id }}</td>
+        <td>{{ pl.name }}</td>
+        <td>{{ pl.filename }}</td>
+        <td>
+            <a href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a> |
+            <a href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">Пока нет плейлистов</td></tr>
+    {% endfor %}
+</table>
 
-        async function upload() {
-            const input = document.getElementById('file');
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
+<hr>
+<h2>📤 Загрузить новый плейлист</h2>
+<input type="file" id="file" accept=".m3u,.m3u8">
+<button onclick="upload()">Загрузить</button>
 
-            const res = await fetch('/upload', {
-                method: 'POST',
-                body: formData
+<div id="editor" style="display:none; margin-top:20px;">
+    <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
+    <table id="channel-table" border="1" width="100%">
+        <tr><th>Имя</th><th>Логотип</th><th>Группа</th><th>URL</th><th>Удалить</th></tr>
+    </table>
+    <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
+    <button onclick="save()">Сохранить</button>
+    <p id="result-url"></p>
+</div>
+
+<script>
+    let playlistId = null;
+    let channels = [];
+
+    async function upload() {
+        const input = document.getElementById('file');
+        const file = input.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        playlistId = null;
+        channels = data.channels;
+        document.getElementById('playlist-name').textContent = file.name;
+        renderChannels(channels);
+        document.getElementById('editor').style.display = 'block';
+    }
+
+    function renderChannels(chs) {
+        const table = document.getElementById('channel-table');
+        while (table.rows.length > 1) table.deleteRow(1);
+        chs.forEach(ch => {
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td><input value="${escapeHtml(ch.name)}"></td>
+                <td><input size="10" value="${escapeHtml(ch.tvg_logo || '')}"></td>
+                <td><input size="10" value="${escapeHtml(ch.group_title || '')}"></td>
+                <td><input size="20" value="${escapeHtml(ch.url)}"></td>
+                <td><button onclick="removeRow(this)">❌</button></td>
+            `;
+        });
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function save() {
+        const name = document.getElementById('save-name').value || 'Мой плейлист';
+        const table = document.getElementById('channel-table');
+        const updatedChannels = [];
+        for (let i = 1; i < table.rows.length; i++) {
+            const row = table.rows[i];
+            const inputs = row.querySelectorAll('input');
+            updatedChannels.push({
+                name: inputs[0].value,
+                tvg_logo: inputs[1].value || null,
+                group_title: inputs[2].value || null,
+                url: inputs[3].value
             });
-            const data = await res.json();
-            playlistId = data.playlist_id;
-            renderChannels(data.channels);
-            document.getElementById('editor').style.display = 'block';
         }
 
-        function renderChannels(channels) {
-            const table = document.getElementById('channel-table');
-            // Очищаем, кроме заголовка
-            while (table.rows.length > 1) table.deleteRow(1);
-
-            channels.forEach((ch, i) => {
-                const row = table.insertRow();
-                row.innerHTML = `
-                    <td><input value="${escapeHtml(ch.name)}"></td>
-                    <td><input size="10" value="${escapeHtml(ch.tvg_logo || '')}"></td>
-                    <td><input size="10" value="${escapeHtml(ch.group_title || '')}"></td>
-                    <td><input size="20" value="${escapeHtml(ch.url)}"></td>
-                    <td><button onclick="removeRow(this)">❌</button></td>
-                `;
-            });
-        }
-
-        function removeRow(btn) {
-            btn.closest('tr').remove();
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        async function save() {
-            const table = document.getElementById('channel-table');
-            const channels = [];
-
-            for (let i = 1; i < table.rows.length; i++) {
-                const row = table.rows[i];
-                const inputs = row.querySelectorAll('input');
-                channels.push({
-                    name: inputs[0].value,
-                    tvg_logo: inputs[1].value || null,
-                    group_title: inputs[2].value || null,
-                    url: inputs[3].value
-                });
-            }
-
-            const res = await fetch(`/save/${playlistId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(channels)
-            });
-            const data = await res.json();
-            document.getElementById('result-url').innerHTML =
-                `🔗 Ваш обновлённый плейлист: <a href="${data.url}" target="_blank">${data.url}</a>`;
-        }
-    </script>
+        const res = await fetch(`/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, channels: updatedChannels })
+        });
+        const data = await res.json();
+        document.getElementById('result-url').innerHTML =
+            `🔗 Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
+    }
+</script>
 </body>
 </html>

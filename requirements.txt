@@ -3,5 +3,5 @@ uvicorn
 jinja2
 pydantic-settings
 SQLAlchemy
-passlib[bcrypt]
-python-jose[cryptography]  # Для JWT
+passlib[argon2]
+python-jose[cryptography]
