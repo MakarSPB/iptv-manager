@@ -9,7 +9,7 @@ from config import settings
 from database import SessionLocal, User
 
 # Настройка
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 security = HTTPBasic()
 
 # JWT
