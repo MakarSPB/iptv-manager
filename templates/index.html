@@ -68,11 +68,15 @@
         .btn-delete:hover {
             background-color: #c82333;
         }
-        .btn-add {
-            background-color: #28a745;
+        .btn-move {
+            background-color: #6c757d;
             color: white;
-            padding: 10px 15px;
-            font-size: 14px;
+            padding: 4px 6px;
+            font-size: 12px;
+            margin: 0 1px;
+        }
+        .btn-move:hover {
+            background-color: #5a6268;
         }
         .actions {
             display: flex;
@@ -82,11 +86,15 @@
             color: #6c757d;
             font-style: italic;
         }
-        #import-area {
-            margin: 10px 0;
+        .move-controls {
+            display: flex;
+            gap: 2px;
+            white-space: nowrap;
+        }
+        .channel-input {
             width: 100%;
-            height: 100px;
-            font-family: monospace;
+            padding: 4px;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -145,21 +153,23 @@
         <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
 
         <!-- Кнопка "Добавить канал" -->
-        <button class="btn btn-add" onclick="addNewChannel()">➕ Добавить канал</button>
+        <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
 
         <!-- Импорт M3U из текста -->
         <div style="margin: 10px 0;">
             <h4>📎 Импортировать каналы из M3U</h4>
-            <textarea id="import-area" placeholder="Вставьте сюда содержимое .m3u файла..."></textarea>
+            <textarea id="import-area" placeholder="Вставьте сюда содержимое .m3u файла..." style="width: 100%; height: 100px;"></textarea>
             <button class="btn btn-edit" onclick="importFromText()">Импортировать</button>
         </div>
 
         <table id="channel-table">
             <tr>
+                <th>№</th>
                 <th>Имя</th>
                 <th>Логотип</th>
                 <th>Группа</th>
                 <th>URL</th>
+                <th>Переместить</th>
                 <th>Удалить</th>
             </tr>
         </table>
@@ -192,7 +202,7 @@
         channels = data.channels;
         document.getElementById('playlist-name').textContent = file.name;
         document.getElementById('save-name').value = file.name.replace('.m3u', '').replace('.m3u8', '');
-        renderChannels(channels);
+        renderChannels();
         document.getElementById('editor').style.display = 'block';
     }
 
@@ -205,7 +215,7 @@
             channels = data.channels;
             document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
             document.getElementById('save-name').value = data.name || 'Без названия';
-            renderChannels(channels);
+            renderChannels();
             document.getElementById('editor').style.display = 'block';
         } catch (err) {
             alert('Ошибка загрузки плейлиста: ' + err.message);
@@ -231,21 +241,6 @@
         }
     }
 
-    function renderChannels(chs) {
-        const table = document.getElementById('channel-table');
-        while (table.rows.length > 1) table.deleteRow(1);
-        chs.forEach(ch => {
-            const row = table.insertRow();
-            row.innerHTML = `
-                <td><input value="${escapeHtml(ch.name)}" style="width: 100%"></td>
-                <td><input value="${escapeHtml(ch.tvg_logo || '')}" size="10" style="width: 100%"></td>
-                <td><input value="${escapeHtml(ch.group_title || '')}" size="10" style="width: 100%"></td>
-                <td><input value="${escapeHtml(ch.url)}" size="20" style="width: 100%"></td>
-                <td><button class="btn btn-delete" onclick="removeRow(this)">❌</button></td>
-            `;
-        });
-    }
-
     function addNewChannel() {
         channels.push({
             name: "Новый канал",
@@ -253,11 +248,64 @@
             group_title: "",
             url: "http://example.com/stream"
         });
-        renderChannels(channels);
+        renderChannels();
     }
 
-    function removeRow(btn) {
-        btn.closest('tr').remove();
+    function renderChannels() {
+        const table = document.getElementById('channel-table');
+        while (table.rows.length > 1) table.deleteRow(1);
+        channels.forEach((ch, i) => {
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td>${i + 1}</td>
+                <td><input class="channel-input" value="${escapeHtml(ch.name)}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.tvg_logo || '')}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.group_title || '')}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.url)}"></td>
+                <td class="move-controls">
+                    <button class="btn btn-move" title="Вверх" onclick="moveUp(${i})">↑</button>
+                    <button class="btn btn-move" title="В начало" onclick="moveToTop(${i})">⤒</button>
+                    <button class="btn btn-move" title="В конец" onclick="moveToBottom(${i})">⤓</button>
+                    <button class="btn btn-move" title="Вниз" onclick="moveDown(${i})">↓</button>
+                </td>
+                <td><button class="btn btn-delete" onclick="removeRow(${i})">❌</button></td>
+            `;
+        });
+    }
+
+    function moveUp(index) {
+        if (index > 0) {
+            [channels[index], channels[index - 1]] = [channels[index - 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveDown(index) {
+        if (index < channels.length - 1) {
+            [channels[index], channels[index + 1]] = [channels[index + 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveToTop(index) {
+        if (index > 0) {
+            channels.unshift(channels.splice(index, 1)[0]);
+            renderChannels();
+        }
+    }
+
+    function moveToBottom(index) {
+        if (index < channels.length - 1) {
+            channels.push(channels.splice(index, 1)[0]);
+            renderChannels();
+        }
+    }
+
+    function removeRow(index) {
+        if (confirm('Удалить канал?')) {
+            channels.splice(index, 1);
+            renderChannels();
+        }
     }
 
     function cancelEdit() {
@@ -277,7 +325,6 @@
             alert("Введите содержимое M3U");
             return;
         }
-
         try {
             const res = await fetch('/parse-text', {
                 method: 'POST',
@@ -286,7 +333,7 @@
             });
             const data = await res.json();
             channels = channels.concat(data.channels);
-            renderChannels(channels);
+            renderChannels();
             document.getElementById('import-area').value = '';
         } catch (err) {
             alert('Ошибка парсинга: ' + err.message);
@@ -331,7 +378,7 @@
         }
     }
 
-    // Обработка сообщений из других страниц
+    // Обработка сообщений для загрузки плейлиста (с /playlists)
     window.addEventListener('message', function(event) {
         if (event.data.action === 'loadPlaylist') {
             const data = event.data.data;
@@ -339,7 +386,7 @@
             channels = data.channels;
             document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
             document.getElementById('save-name').value = data.name || 'Без названия';
-            renderChannels(channels);
+            renderChannels();
             document.getElementById('editor').style.display = 'block';
         }
     });
