@@ -34,7 +34,7 @@ logs/
 *.log
 *.sqlite3
 *.db
-
+*.properties
 # === Переменные окружения ===
 .env
 .env.local
