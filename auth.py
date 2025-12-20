@@ -56,13 +56,10 @@ def init_admin_user():
     db = SessionLocal()
     try:
         print("🔧 Запуск инициализации администратора...")
-
-        # Проверка настроек
         print(f"  ➤ ADMIN_USERNAME: {settings.admin_username}")
         print(f"  ➤ ADMIN_PASSWORD длина: {len(settings.admin_password)}")
         print(f"  ➤ ADMIN_PASSWORD repr: {repr(settings.admin_password)}")
 
-        # Проверка, существует ли уже админ
         admin = db.query(User).filter(User.username == settings.admin_username).first()
         if admin:
             print(f"✅ Администратор '{settings.admin_username}' уже существует.")
@@ -70,19 +67,14 @@ def init_admin_user():
 
         print("🔐 Администратор не найден — создаём нового...")
 
-        # Обрезаем пароль до 72 символов (ограничение bcrypt)
         safe_password = settings.admin_password[:72]
-        print(f"  ➤ Используем пароль (72 символа): {repr(safe_password)}")
+        print(f"  ➤ Используем пароль: {repr(safe_password)}")
 
-        # Хешируем
         hashed_password = get_password_hash(safe_password)
         if not hashed_password:
-            print("❌ Ошибка: не удалось хэшировать пароль!")
+            print("❌ Не удалось хэшировать пароль.")
             return
 
-        print(f"  ➤ Хэш пароля успешно создан: {hashed_password[:30]}...")
-
-        # Создаём пользователя
         admin = User(
             username=settings.admin_username,
             password=hashed_password,
@@ -92,10 +84,8 @@ def init_admin_user():
         db.commit()
         db.refresh(admin)
 
-        print(f"✅ Администратор '{admin.username}' успешно создан в БД!")
+        print(f"✅ Администратор '{admin.username}' создан!")
     except Exception as e:
-        print(f"❌ Ошибка при создании администратора: {type(e).__name__}: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Ошибка при создании админа: {type(e).__name__}: {e}")
     finally:
         db.close()
