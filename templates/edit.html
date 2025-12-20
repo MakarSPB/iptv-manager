@@ -10,8 +10,10 @@
         .btn { padding: 6px 12px; margin: 2px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
         .btn-edit { background-color: #007bff; color: white; }
         .btn-delete { background-color: #dc3545; color: white; }
+        .btn-move { background-color: #6c757d; color: white; padding: 4px 8px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .move-controls { display: flex; gap: 2px; }
     </style>
 </head>
 <body>
@@ -29,6 +31,7 @@
 <div class="container">
     <h2>✏️ Редактирование плейлиста</h2>
     <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px;">
+
     <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
     <button class="btn btn-edit" onclick="importFromText()">📎 Импортировать из текста</button>
 
@@ -36,11 +39,12 @@
 
     <table id="channel-table">
         <tr>
+            <th>№</th>
             <th>Имя</th>
             <th>Логотип</th>
             <th>Группа</th>
             <th>URL</th>
-            <th>Удалить</th>
+            <th>Действия</th>
         </tr>
     </table>
 
@@ -69,13 +73,49 @@
         channels.forEach((ch, i) => {
             const row = table.insertRow();
             row.innerHTML = `
+                <td>${i + 1}</td>
                 <td><input value="${escapeHtml(ch.name)}" style="width:100%"></td>
                 <td><input value="${escapeHtml(ch.tvg_logo || '')}" style="width:100%"></td>
                 <td><input value="${escapeHtml(ch.group_title || '')}" style="width:100%"></td>
                 <td><input value="${escapeHtml(ch.url)}" style="width:100%"></td>
-                <td><button class="btn btn-delete" onclick="channels.splice(${i},1); renderChannels();">❌</button></td>
+                <td>
+                    <div class="move-controls">
+                        <button class="btn btn-move" onclick="moveUp(${i})">↑</button>
+                        <button class="btn btn-move" onclick="moveToTop(${i})">⤒</button>
+                        <button class="btn btn-move" onclick="moveToBottom(${i})">⤓</button>
+                        <button class="btn btn-move" onclick="moveDown(${i})">↓</button>
+                    </div>
+                </td>
             `;
         });
+    }
+
+    function moveUp(index) {
+        if (index > 0) {
+            [channels[index], channels[index - 1]] = [channels[index - 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveDown(index) {
+        if (index < channels.length - 1) {
+            [channels[index], channels[index + 1]] = [channels[index + 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveToTop(index) {
+        if (index > 0) {
+            channels.unshift(channels.splice(index, 1)[0]);
+            renderChannels();
+        }
+    }
+
+    function moveToBottom(index) {
+        if (index < channels.length - 1) {
+            channels.push(channels.splice(index, 1)[0]);
+            renderChannels();
+        }
     }
 
     function importFromText() {
@@ -91,10 +131,10 @@
 
         for (let i = 0; i < inputs.length; i += 5) {
             updatedChannels.push({
-                name: inputs[i].value,
-                tvg_logo: inputs[i+1].value || null,
-                group_title: inputs[i+2].value || null,
-                url: inputs[i+3].value
+                name: inputs[i + 1].value,
+                tvg_logo: inputs[i + 2].value || null,
+                group_title: inputs[i + 3].value || null,
+                url: inputs[i + 4].value
             });
         }
 
@@ -125,7 +165,6 @@
         return div.innerHTML;
     }
 
-    // Импорт из текста
     async function importFromText() {
         const text = document.getElementById('import-area').value.trim();
         if (!text) return;

@@ -251,7 +251,6 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/login")
 
-    # Пустой плейлист
     return templates.TemplateResponse(
         "edit.html",
         {
