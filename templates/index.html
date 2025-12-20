@@ -274,6 +274,19 @@
             alert('Ошибка сохранения: ' + err.message);
         }
     }
+
+    // Обработка сообщений из других страниц (например, /playlists)
+    window.addEventListener('message', function(event) {
+        if (event.data.action === 'loadPlaylist') {
+            const data = event.data.data;
+            currentPlaylistId = event.data.playlistId;
+            channels = data.channels;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels(channels);
+            document.getElementById('editor').style.display = 'block';
+        }
+    });
 </script>
 </body>
 </html>
