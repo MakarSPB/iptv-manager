@@ -206,6 +206,17 @@ async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user:
     db.commit()
     return {"message": "Плейлист удалён"}
 
+@app.post("/parse-text", response_class=JSONResponse)
+async def parse_text(data: dict):
+    content = data.get("content", "")
+    if not content.strip():
+        raise HTTPException(status_code=400, detail="Пустой контент")
+    try:
+        channels = parse_m3u(content)
+        return {"channels": channels}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
+
 @app.post("/save", response_class=JSONResponse)
 async def save_playlist(
         data: dict,
