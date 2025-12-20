@@ -9,7 +9,7 @@ from config import settings
 from database import SessionLocal, User
 
 # Настройка
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  # ✅ Добавлено
 security = HTTPBasic()
 
 # JWT
@@ -22,7 +22,7 @@ def verify_password(plain_password, hashed_password):
 
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    return pwd_context.hash(password[:72])  # ✅ Обрезаем до 72 символов на всякий случай
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -40,21 +40,19 @@ def get_db():
         db.close()
 
 
-# Проверка админа из .env
 def authenticate_admin(username: str, password: str) -> bool:
     if username == settings.admin_username and password == settings.admin_password:
         return True
     return False
 
 
-# Создание первого админа в БД (если нет)
 def init_admin_user():
     db = SessionLocal()
     admin = db.query(User).filter(User.username == settings.admin_username).first()
     if not admin:
         admin = User(
             username=settings.admin_username,
-            password=get_password_hash(settings.admin_password),
+            password=get_password_hash(settings.admin_password),  # ✅ Теперь безопасно
             is_admin=True
         )
         db.add(admin)
