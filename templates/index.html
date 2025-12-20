@@ -136,9 +136,10 @@
     {% endif %}
 
     <hr>
-    <h2>📤 Загрузить новый плейлист</h2>
+    <h2>📤 Загрузить или создать плейлист</h2>
     <input type="file" id="file" accept=".m3u,.m3u8">
-    <button class="btn btn-edit" onclick="upload()">Загрузить</button>
+    <button class="btn btn-edit" onclick="upload()">📁 Загрузить</button>
+    <a href="/new" class="btn btn-edit">➕ Создать пустой</a>
 
     <div id="editor" style="display:none; margin-top:20px;">
         <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>

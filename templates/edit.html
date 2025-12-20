@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Редактировать плейлист</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        nav { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; }
+        nav a { color: white; margin: 0 10px; text-decoration: none; }
+        .container { padding: 20px; }
+        .btn { padding: 6px 12px; margin: 2px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-edit { background-color: #007bff; color: white; }
+        .btn-delete { background-color: #dc3545; color: white; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="logo"><strong>IPTV Manager</strong></div>
+    <div class="links">
+        <a href="/">Главная</a>
+        <a href="/upload">Загрузить</a>
+        <a href="/playlists">Мои плейлисты</a>
+        <a href="/profile">Профиль</a>
+        <a href="/logout">Выход</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>✏️ Редактирование плейлиста</h2>
+    <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px;">
+    <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
+    <button class="btn btn-edit" onclick="importFromText()">📎 Импортировать из текста</button>
+
+    <textarea id="import-area" placeholder="Вставьте содержимое M3U сюда..." style="width: 100%; height: 100px; margin: 10px 0; display: none;"></textarea>
+
+    <table id="channel-table">
+        <tr>
+            <th>Имя</th>
+            <th>Логотип</th>
+            <th>Группа</th>
+            <th>URL</th>
+            <th>Удалить</th>
+        </tr>
+    </table>
+
+    <button class="btn btn-edit" onclick="save()">💾 Сохранить</button>
+    <button class="btn btn-delete" onclick="cancel()">Отмена</button>
+    <p id="result-url"></p>
+</div>
+
+<script>
+    let channels = [];
+    const currentPlaylistId = null;
+
+    function addNewChannel() {
+        channels.push({
+            name: "Новый канал",
+            tvg_logo: "",
+            group_title: "",
+            url: "http://example.com/stream"
+        });
+        renderChannels();
+    }
+
+    function renderChannels() {
+        const table = document.getElementById('channel-table');
+        while (table.rows.length > 1) table.deleteRow(1);
+        channels.forEach((ch, i) => {
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td><input value="${escapeHtml(ch.name)}" style="width:100%"></td>
+                <td><input value="${escapeHtml(ch.tvg_logo || '')}" style="width:100%"></td>
+                <td><input value="${escapeHtml(ch.group_title || '')}" style="width:100%"></td>
+                <td><input value="${escapeHtml(ch.url)}" style="width:100%"></td>
+                <td><button class="btn btn-delete" onclick="channels.splice(${i},1); renderChannels();">❌</button></td>
+            `;
+        });
+    }
+
+    function importFromText() {
+        const area = document.getElementById('import-area');
+        area.style.display = area.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function save() {
+        const name = document.getElementById('save-name').value || 'Новый плейлист';
+        const table = document.getElementById('channel-table');
+        const inputs = table.querySelectorAll('input');
+        const updatedChannels = [];
+
+        for (let i = 0; i < inputs.length; i += 5) {
+            updatedChannels.push({
+                name: inputs[i].value,
+                tvg_logo: inputs[i+1].value || null,
+                group_title: inputs[i+2].value || null,
+                url: inputs[i+3].value
+            });
+        }
+
+        try {
+            const res = await fetch('/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, channels: updatedChannels })
+            });
+            const data = await res.json();
+            document.getElementById('result-url').innerHTML =
+                `✅ Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
+            setTimeout(() => window.location.href = '/', 2000);
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+
+    function cancel() {
+        if (confirm('Отменить редактирование?')) {
+            window.location.href = '/';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Импорт из текста
+    async function importFromText() {
+        const text = document.getElementById('import-area').value.trim();
+        if (!text) return;
+        try {
+            const res = await fetch('/parse-text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text })
+            });
+            const data = await res.json();
+            channels = channels.concat(data.channels);
+            renderChannels();
+            document.getElementById('import-area').value = '';
+        } catch (err) {
+            alert('Ошибка импорта: ' + err.message);
+        }
+    }
+</script>
+</body>
+</html>

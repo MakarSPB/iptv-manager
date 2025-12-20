@@ -245,6 +245,23 @@ async def save_playlist(
     url = f"/playlists/{playlist_id}.m3u"
     return {"message": "Сохранено", "url": url}
 
+@app.get("/new", response_class=HTMLResponse)
+async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
+
+    # Пустой плейлист
+    return templates.TemplateResponse(
+        "edit.html",
+        {
+            "request": request,
+            "user": user,
+            "playlist": None,
+            "channels": []
+        }
+    )
+
 @app.get("/playlists/{playlist_id}.m3u")
 async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
