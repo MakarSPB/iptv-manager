@@ -9,7 +9,7 @@ from config import settings
 from database import SessionLocal, User
 
 # Настройка
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  # ✅ Добавлено
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBasic()
 
 # JWT
@@ -17,12 +17,16 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 неделя
 
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    if plain_password is None or hashed_password is None:
+        return False
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password[:72])  # ✅ Обрезаем до 72 символов на всякий случай
+def get_password_hash(password: str) -> str:
+    if password is None:
+        raise ValueError("Пароль не может быть None")
+    return pwd_context.hash(password[:72])  # Обрезаем до 72 байт
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -41,6 +45,8 @@ def get_db():
 
 
 def authenticate_admin(username: str, password: str) -> bool:
+    if not username or not password:
+        return False
     if username == settings.admin_username and password == settings.admin_password:
         return True
     return False
@@ -48,13 +54,22 @@ def authenticate_admin(username: str, password: str) -> bool:
 
 def init_admin_user():
     db = SessionLocal()
-    admin = db.query(User).filter(User.username == settings.admin_username).first()
-    if not admin:
-        admin = User(
-            username=settings.admin_username,
-            password=get_password_hash(settings.admin_password),  # ✅ Теперь безопасно
-            is_admin=True
-        )
-        db.add(admin)
-        db.commit()
-    db.close()
+    try:
+        admin = db.query(User).filter(User.username == settings.admin_username).first()
+        if not admin:
+            # Явно обрезаем пароль до 72 символов
+            safe_password = settings.admin_password[:72]
+            hashed_password = get_password_hash(safe_password)
+
+            admin = User(
+                username=settings.admin_username,
+                password=hashed_password,
+                is_admin=True
+            )
+            db.add(admin)
+            db.commit()
+            db.refresh(admin)
+    except Exception as e:
+        print(f"Ошибка при инициализации администратора: {e}")
+    finally:
+        db.close()
