@@ -23,6 +23,26 @@
         .container {
             padding: 20px;
         }
+        #editor {
+            display: none;
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .btn {
+            padding: 5px 10px;
+            margin: 2px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -45,7 +65,7 @@
     <h1>🎥 Добро пожаловать, <strong>{{ user.username }}</strong>!</h1>
 
     <h2>📁 Мои плейлисты</h2>
-    <table border="1" width="100%">
+    <table>
         <tr>
             <th>ID</th>
             <th>Название</th>
@@ -58,8 +78,9 @@
             <td>{{ pl.name }}</td>
             <td>{{ pl.filename }}</td>
             <td>
-                <a href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a> |
-                <a href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+                <button class="btn" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
+                <a class="btn" href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a>
+                <a class="btn" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
             </td>
         </tr>
         {% else %}
@@ -70,22 +91,32 @@
     <hr>
     <h2>📤 Загрузить новый плейлист</h2>
     <input type="file" id="file" accept=".m3u,.m3u8">
-    <button onclick="upload()">Загрузить</button>
+    <button class="btn" onclick="upload()">Загрузить</button>
 
+    <!-- Редактор плейлиста -->
     <div id="editor" style="display:none; margin-top:20px;">
         <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
-        <table id="channel-table" border="1" width="100%">
-            <tr><th>Имя</th><th>Логотип</th><th>Группа</th><th>URL</th><th>Удалить</th></tr>
+        <table id="channel-table">
+            <tr>
+                <th>Имя</th>
+                <th>Логотип</th>
+                <th>Группа</th>
+                <th>URL</th>
+                <th>Удалить</th>
+            </tr>
         </table>
         <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
-        <button onclick="save()">Сохранить</button>
+        <button class="btn" onclick="save()">Сохранить</button>
+        <button class="btn" onclick="cancelEdit()">Отмена</button>
         <p id="result-url"></p>
     </div>
 </div>
 
 <script>
+    let currentPlaylistId = null;
     let channels = [];
 
+    // Загрузка нового файла
     async function upload() {
         const input = document.getElementById('file');
         const file = input.files[0];
@@ -99,41 +130,72 @@
             body: formData
         });
         const data = await res.json();
+
+        currentPlaylistId = null; // Новый плейлист
         channels = data.channels;
         document.getElementById('playlist-name').textContent = file.name;
+        document.getElementById('save-name').value = file.name.replace('.m3u', '').replace('.m3u8', '');
         renderChannels(channels);
         document.getElementById('editor').style.display = 'block';
     }
 
+    // Редактирование существующего плейлиста
+    async function editPlaylist(id) {
+        try {
+            const res = await fetch(`/playlists/${id}/edit`);
+            const data = await res.json();
+
+            currentPlaylistId = id;
+            channels = data.channels;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels(channels);
+            document.getElementById('editor').style.display = 'block';
+        } catch (err) {
+            alert('Ошибка загрузки плейлиста: ' + err.message);
+        }
+    }
+
+    // Отображение каналов в таблице
     function renderChannels(chs) {
         const table = document.getElementById('channel-table');
         while (table.rows.length > 1) table.deleteRow(1);
         chs.forEach(ch => {
             const row = table.insertRow();
             row.innerHTML = `
-                <td><input value="${escapeHtml(ch.name)}"></td>
-                <td><input size="10" value="${escapeHtml(ch.tvg_logo || '')}"></td>
-                <td><input size="10" value="${escapeHtml(ch.group_title || '')}"></td>
-                <td><input size="20" value="${escapeHtml(ch.url)}"></td>
-                <td><button onclick="removeRow(this)">❌</button></td>
+                <td><input value="${escapeHtml(ch.name)}" style="width: 100%"></td>
+                <td><input value="${escapeHtml(ch.tvg_logo || '')}" size="10" style="width: 100%"></td>
+                <td><input value="${escapeHtml(ch.group_title || '')}" size="10" style="width: 100%"></td>
+                <td><input value="${escapeHtml(ch.url)}" size="20" style="width: 100%"></td>
+                <td><button class="btn" onclick="removeRow(this)">❌</button></td>
             `;
         });
     }
 
+    // Удаление строки
     function removeRow(btn) {
         btn.closest('tr').remove();
     }
 
+    // Отмена редактирования
+    function cancelEdit() {
+        document.getElementById('editor').style.display = 'none';
+        document.getElementById('file').value = '';
+    }
+
+    // Экранирование HTML
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
+    // Сохранение плейлиста
     async function save() {
         const name = document.getElementById('save-name').value || 'Мой плейлист';
         const table = document.getElementById('channel-table');
         const updatedChannels = [];
+
         for (let i = 1; i < table.rows.length; i++) {
             const row = table.rows[i];
             const inputs = row.querySelectorAll('input');
@@ -145,14 +207,27 @@
             });
         }
 
-        const res = await fetch(`/save`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, channels: updatedChannels })
-        });
-        const data = await res.json();
-        document.getElementById('result-url').innerHTML =
-            `🔗 Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
+        const url = currentPlaylistId ? `/playlists/${currentPlaylistId}` : `/save`;
+        const method = currentPlaylistId ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, channels: updatedChannels })
+            });
+
+            const data = await res.json();
+            document.getElementById('result-url').innerHTML =
+                `🔗 Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
+
+            // Обновляем страницу через 2 секунды
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } catch (err) {
+            alert('Ошибка сохранения: ' + err.message);
+        }
     }
 </script>
 </body>
