@@ -1,4 +1,7 @@
 fastapi[all]
 uvicorn
-pydantic-settings
 jinja2
+pydantic-settings
+SQLAlchemy
+passlib[bcrypt]
+python-jose[cryptography]  # Для JWT
