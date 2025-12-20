@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     app_port: int = Field(8000, env="APP_PORT")
     playlists_dir: str = Field("storage/playlists", env="PLAYLISTS_DIR")
     debug: bool = Field(False, env="DEBUG")
-
+    secret_key: str = Field(..., env="SECRET_KEY")
+    admin_username: str = Field(..., env="ADMIN_USERNAME")
+    admin_password: str = Field(..., env="ADMIN_PASSWORD")
     class Config:
         env_file = ".env"
 
