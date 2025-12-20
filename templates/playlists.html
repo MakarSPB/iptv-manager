@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Мои плейлисты</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        nav {
+            background: #333;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .btn {
+            padding: 5px 10px;
+            margin: 2px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-edit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        .btn-download {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        .empty {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+<!-- Навигационное меню -->
+<nav>
+    <div class="logo">
+        <strong>IPTV Manager</strong>
+    </div>
+    <div class="links">
+        <a href="/">Главная</a>
+        <a href="/upload">Загрузить</a>
+        <a href="/playlists">Мои плейлисты</a>
+        <a href="/profile">Профиль</a>
+        <a href="/logout">Выход</a>
+    </div>
+</nav>
+
+<!-- Основное содержимое -->
+<div class="container">
+    <h1>📁 Мои плейлисты</h1>
+
+    {% if playlists %}
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Файл</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for pl in playlists %}
+        <tr>
+            <td>{{ pl.id }}</td>
+            <td>{{ pl.name }}</td>
+            <td>{{ pl.filename }}</td>
+            <td class="actions">
+                <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
+                <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a>
+                <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+                <button class="btn btn-delete" onclick="deletePlaylist('{{ pl.id }}')">Удалить</button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
+    {% endif %}
+
+    <a href="/upload" class="btn btn-primary">Загрузить новый плейлист</a>
+</div>
+
+<script>
+    async function editPlaylist(id) {
+        try {
+            const res = await fetch(`/playlists/${id}/edit`);
+            const data = await res.json();
+
+            // Сохраняем текущий ID в сессии
+            sessionStorage.setItem('currentPlaylistId', id);
+
+            // Переходим к главной, где будет редактор
+            window.location.href = '/';
+
+            // Через небольшую задержку загружаем данные
+            setTimeout(() => {
+                window.postMessage({ action: 'loadPlaylist', data: data }, '*');
+            }, 500);
+        } catch (err) {
+            alert('Ошибка загрузки плейлиста: ' + err.message);
+        }
+    }
+
+    async function deletePlaylist(id) {
+        if (!confirm('Вы уверены, что хотите удалить этот плейлист?')) return;
+
+        try {
+            const res = await fetch(`/playlists/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert('Ошибка: ' + data.detail);
+            }
+        } catch (err) {
+            alert('Ошибка удаления: ' + err.message);
+        }
+    }
+
+    // Обработка сообщений для загрузки плейлиста в редактор
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'loadPlaylist') {
+            const data = event.data.data;
+            currentPlaylistId = data.id;
+            channels = data.channels;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels(channels);
+            document.getElementById('editor').style.display = 'block';
+        }
+    });
+</script>
+</body>
+</html>

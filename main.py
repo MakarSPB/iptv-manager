@@ -97,6 +97,22 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "playlists": playlists
         }
     )
+@app.get("/playlists", response_class=HTMLResponse)
+async def my_playlists(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
+
+    playlists = db.query(Playlist).filter(Playlist.owner_id == user.id).all()
+    return templates.TemplateResponse(
+        "playlists.html",
+        {
+            "request": request,
+            "user": user,
+            "playlists": playlists
+        }
+    )
+
 
 @app.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, db: Session = Depends(get_db)):
@@ -180,6 +196,16 @@ async def update_playlist(
 
     return {"message": "Плейлист обновлён", "url": f"/playlists/{playlist_id}.m3u"}
 
+# === Удаление плейлиста ===
+@app.delete("/playlists/{playlist_id}")
+async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
+
+    db.delete(playlist)
+    db.commit()
+    return {"message": "Плейлист удалён"}
 
 # === Сохранение плейлиста ===
 @app.post("/save", response_class=JSONResponse)
