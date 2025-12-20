@@ -98,6 +98,30 @@ async def index(request: Request, db: Session = Depends(get_db)):
         }
     )
 
+@app.get("/profile", response_class=HTMLResponse)
+async def profile(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
+
+    total_playlists = db.query(Playlist).filter(Playlist.owner_id == user.id).count()
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "user": user,
+            "total_playlists": total_playlists
+        }
+    )
+
+@app.get("/upload", response_class=HTMLResponse)
+async def upload_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
+    return templates.TemplateResponse("upload.html", {"request": request})
+
 # === Загрузка плейлиста ===
 @app.post("/upload", response_class=JSONResponse)
 async def upload_playlist(

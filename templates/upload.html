@@ -1,36 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPTV Manager</title>
+    <title>Загрузить плейлист</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        nav {
-            background: #333;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        nav a {
-            color: white;
-            margin: 0 10px;
-            text-decoration: none;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        .container {
-            padding: 20px;
-        }
+        nav { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; }
+        nav a { color: white; margin: 0 10px; text-decoration: none; }
+        .container { padding: 20px; }
+        #editor { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
-<!-- Навигационное меню -->
 <nav>
-    <div class="logo">
-        <strong>IPTV Manager</strong>
-    </div>
+    <div class="logo"><strong>IPTV Manager</strong></div>
     <div class="links">
         <a href="/">Главная</a>
         <a href="/upload">Загрузить</a>
@@ -40,39 +22,12 @@
     </div>
 </nav>
 
-<!-- Основное содержимое -->
 <div class="container">
-    <h1>🎥 Добро пожаловать, <strong>{{ user.username }}</strong>!</h1>
-
-    <h2>📁 Мои плейлисты</h2>
-    <table border="1" width="100%">
-        <tr>
-            <th>ID</th>
-            <th>Название</th>
-            <th>Файл</th>
-            <th>Действия</th>
-        </tr>
-        {% for pl in playlists %}
-        <tr>
-            <td>{{ pl.id }}</td>
-            <td>{{ pl.name }}</td>
-            <td>{{ pl.filename }}</td>
-            <td>
-                <a href="/playlists/{{ pl.id }}.m3u" target="_blank">Открыть</a> |
-                <a href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">Пока нет плейлистов</td></tr>
-        {% endfor %}
-    </table>
-
-    <hr>
-    <h2>📤 Загрузить новый плейлист</h2>
+    <h1>📤 Загрузить новый плейлист</h1>
     <input type="file" id="file" accept=".m3u,.m3u8">
     <button onclick="upload()">Загрузить</button>
 
-    <div id="editor" style="display:none; margin-top:20px;">
+    <div id="editor">
         <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
         <table id="channel-table" border="1" width="100%">
             <tr><th>Имя</th><th>Логотип</th><th>Группа</th><th>URL</th><th>Удалить</th></tr>
