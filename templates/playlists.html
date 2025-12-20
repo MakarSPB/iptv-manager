@@ -126,17 +126,21 @@
 </div>
 
 <script>
+    let currentPlaylistId = null;
+    let channels = [];
+
     async function editPlaylist(id) {
         try {
             const res = await fetch(`/playlists/${id}/edit`);
             const data = await res.json();
 
-            window.currentPlaylistId = id;
-            window.channels = data.channels;
-            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
-            document.getElementById('save-name').value = data.name || 'Без названия';
-            renderChannels(channels);
-            document.getElementById('editor').style.display = 'block';
+            // Переходим на главную, где находится редактор
+            window.location.href = '/';
+
+            // Через небольшую задержку передаём данные в редактор
+            setTimeout(() => {
+                window.postMessage({ action: 'loadPlaylist', data: data, playlistId: id }, '*');
+            }, 500);
         } catch (err) {
             alert('Ошибка загрузки плейлиста: ' + err.message);
         }
@@ -160,6 +164,19 @@
             alert('Ошибка удаления: ' + err.message);
         }
     }
+
+    // Обработка сообщения для загрузки плейлиста на главной странице
+    window.addEventListener('message', function(event) {
+        if (event.data.action === 'loadPlaylist') {
+            const data = event.data.data;
+            currentPlaylistId = event.data.playlistId;
+            channels = data.channels;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels(channels);
+            document.getElementById('editor').style.display = 'block';
+        }
+    });
 </script>
 </body>
 </html>
