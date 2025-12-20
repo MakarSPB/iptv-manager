@@ -4,16 +4,83 @@
     <title>Редактировать плейлист</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        nav { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; }
-        nav a { color: white; margin: 0 10px; text-decoration: none; }
-        .container { padding: 20px; }
-        .btn { padding: 6px 12px; margin: 2px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-edit { background-color: #007bff; color: white; }
-        .btn-delete { background-color: #dc3545; color: white; }
-        .btn-move { background-color: #6c757d; color: white; padding: 4px 8px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        .move-controls { display: flex; gap: 2px; }
+        nav {
+            background: #333;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 20px;
+        }
+        .btn {
+            padding: 6px 12px;
+            margin: 2px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-edit {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-edit:hover {
+            background-color: #0056b3;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        .btn-move {
+            background-color: #6c757d;
+            color: white;
+            padding: 4px 6px;
+            font-size: 12px;
+            margin: 0 1px;
+        }
+        .btn-move:hover {
+            background-color: #5a6268;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .move-controls {
+            display: flex;
+            gap: 2px;
+            white-space: nowrap;
+        }
+        .channel-input {
+            width: 100%;
+            padding: 4px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -30,7 +97,7 @@
 
 <div class="container">
     <h2>✏️ Редактирование плейлиста</h2>
-    <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px;">
+    <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
 
     <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
     <button class="btn btn-edit" onclick="importFromText()">📎 Импортировать из текста</button>
@@ -44,7 +111,8 @@
             <th>Логотип</th>
             <th>Группа</th>
             <th>URL</th>
-            <th>Действия</th>
+            <th>Переместить</th>
+            <th>Удалить</th>
         </tr>
     </table>
 
@@ -69,22 +137,25 @@
 
     function renderChannels() {
         const table = document.getElementById('channel-table');
+        // Очищаем все строки, кроме заголовка
         while (table.rows.length > 1) table.deleteRow(1);
+
         channels.forEach((ch, i) => {
             const row = table.insertRow();
             row.innerHTML = `
                 <td>${i + 1}</td>
-                <td><input value="${escapeHtml(ch.name)}" style="width:100%"></td>
-                <td><input value="${escapeHtml(ch.tvg_logo || '')}" style="width:100%"></td>
-                <td><input value="${escapeHtml(ch.group_title || '')}" style="width:100%"></td>
-                <td><input value="${escapeHtml(ch.url)}" style="width:100%"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.name)}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.tvg_logo || '')}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.group_title || '')}"></td>
+                <td><input class="channel-input" value="${escapeHtml(ch.url)}"></td>
+                <td class="move-controls">
+                    <button class="btn btn-move" title="Вверх" onclick="moveUp(${i})">↑</button>
+                    <button class="btn btn-move" title="В начало" onclick="moveToTop(${i})">⤒</button>
+                    <button class="btn btn-move" title="В конец" onclick="moveToBottom(${i})">⤓</button>
+                    <button class="btn btn-move" title="Вниз" onclick="moveDown(${i})">↓</button>
+                </td>
                 <td>
-                    <div class="move-controls">
-                        <button class="btn btn-move" onclick="moveUp(${i})">↑</button>
-                        <button class="btn btn-move" onclick="moveToTop(${i})">⤒</button>
-                        <button class="btn btn-move" onclick="moveToBottom(${i})">⤓</button>
-                        <button class="btn btn-move" onclick="moveDown(${i})">↓</button>
-                    </div>
+                    <button class="btn btn-delete" onclick="removeRow(${i})">❌</button>
                 </td>
             `;
         });
@@ -118,38 +189,10 @@
         }
     }
 
-    function importFromText() {
-        const area = document.getElementById('import-area');
-        area.style.display = area.style.display === 'none' ? 'block' : 'none';
-    }
-
-    async function save() {
-        const name = document.getElementById('save-name').value || 'Новый плейлист';
-        const table = document.getElementById('channel-table');
-        const inputs = table.querySelectorAll('input');
-        const updatedChannels = [];
-
-        for (let i = 0; i < inputs.length; i += 5) {
-            updatedChannels.push({
-                name: inputs[i + 1].value,
-                tvg_logo: inputs[i + 2].value || null,
-                group_title: inputs[i + 3].value || null,
-                url: inputs[i + 4].value
-            });
-        }
-
-        try {
-            const res = await fetch('/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, channels: updatedChannels })
-            });
-            const data = await res.json();
-            document.getElementById('result-url').innerHTML =
-                `✅ Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
-            setTimeout(() => window.location.href = '/', 2000);
-        } catch (err) {
-            alert('Ошибка: ' + err.message);
+    function removeRow(index) {
+        if (confirm('Удалить канал?')) {
+            channels.splice(index, 1);
+            renderChannels();
         }
     }
 
@@ -166,8 +209,16 @@
     }
 
     async function importFromText() {
+        const area = document.getElementById('import-area');
+        area.style.display = area.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function importFromText() {
         const text = document.getElementById('import-area').value.trim();
-        if (!text) return;
+        if (!text) {
+            alert("Введите содержимое M3U");
+            return;
+        }
         try {
             const res = await fetch('/parse-text', {
                 method: 'POST',
@@ -182,6 +233,52 @@
             alert('Ошибка импорта: ' + err.message);
         }
     }
+
+    async function save() {
+        const name = document.getElementById('save-name').value || 'Новый плейлист';
+        const table = document.getElementById('channel-table');
+        const inputs = table.querySelectorAll('input');
+        const updatedChannels = [];
+
+        for (let i = 0; i < inputs.length; i += 5) {
+            updatedChannels.push({
+                name: inputs[i].value,
+                tvg_logo: inputs[i + 1].value || null,
+                group_title: inputs[i + 2].value || null,
+                url: inputs[i + 3].value
+            });
+        }
+
+        const url = currentPlaylistId ? `/playlists/${currentPlaylistId}` : `/save`;
+        const method = currentPlaylistId ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, channels: updatedChannels })
+            });
+            const data = await res.json();
+            document.getElementById('result-url').innerHTML =
+                `✅ Сохранено: <a href="${data.url}" target="_blank">${data.url}</a>`;
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        } catch (err) {
+            alert('Ошибка сохранения: ' + err.message);
+        }
+    }
+
+    // Обработка сообщений из других страниц
+    window.addEventListener('message', function(event) {
+        if (event.data.action === 'loadPlaylist') {
+            const data = event.data.data;
+            currentPlaylistId = event.data.playlistId;
+            channels = data.channels;
+            document.getElementById('save-name').value = data.name || 'Без названия';
+            renderChannels();
+        }
+    });
 </script>
 </body>
 </html>
