@@ -137,7 +137,6 @@
 
     function renderChannels() {
         const table = document.getElementById('channel-table');
-        // Очищаем все строки, кроме заголовка
         while (table.rows.length > 1) table.deleteRow(1);
 
         channels.forEach((ch, i) => {
@@ -269,7 +268,6 @@
         }
     }
 
-    // Обработка сообщений из других страниц
     window.addEventListener('message', function(event) {
         if (event.data.action === 'loadPlaylist') {
             const data = event.data.data;
