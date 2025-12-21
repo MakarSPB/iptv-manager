@@ -275,6 +275,14 @@ async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 if __name__ == "__main__":
+    print("=== Загруженные настройки ===")
+    print(f"DEBUG: {settings.DEBUG}")
+    print(f"APP_HOST: {settings.APP_HOST}")
+    print(f"APP_PORT: {settings.APP_PORT}")
+    print(f"ADMIN_USERNAME: {settings.ADMIN_USERNAME}")
+    print(f"PLAYLISTS_DIR: {settings.PLAYLISTS_DIR}")
+    print("==============================")
+
     uvicorn.run(
         "main:app",
         host=settings.APP_HOST,
