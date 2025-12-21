@@ -10,14 +10,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Создаем контекст для хэширования паролей
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Используем argon2 как основную схему, bcrypt — резервная
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
     if not plain_password or not hashed_password:
         return False
     try:
-        # Принудительно усекаем пароль до 72 символов (bcrypt limit)
-        plain_password = plain_password[:72]
+        # Argon2 не имеет жесткого ограничения в 72 байта, как bcrypt
         return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         logger.error(f"Ошибка проверки пароля: {e}")
@@ -27,8 +27,7 @@ def get_password_hash(password):
     if not password:
         return None
     try:
-        # Принудительно усекаем пароль до 72 символов перед хэшированием
-        password = password[:72]
+        # Используем argon2 для хэширования
         return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Ошибка хэширования пароля: {e}")
@@ -52,9 +51,7 @@ def init_admin_user():
     try:
         user = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
         if not user:
-            # Усекаем пароль администратора до 72 символов
-            admin_password = settings.ADMIN_PASSWORD[:72]
-            hashed_password = get_password_hash(admin_password)
+            hashed_password = get_password_hash(settings.ADMIN_PASSWORD)
             if not hashed_password:
                 logger.error("Не удалось хэшировать пароль администратора")
                 return

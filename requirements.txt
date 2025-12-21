@@ -6,3 +6,4 @@ SQLAlchemy
 passlib[argon2]
 python-jose[cryptography]
 python-multipart
+argon2-cffi
