@@ -341,6 +341,8 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
 @app.get("/shared", response_class=HTMLResponse)
 async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
 
     # Получаем все плейлисты, отмеченные как общие
     shared_playlists = (
