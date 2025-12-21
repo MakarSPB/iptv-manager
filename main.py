@@ -426,9 +426,13 @@ async def toggle_admin_status(user_id: int, data: dict, db: Session = Depends(ge
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    # Нельзя менять статус самого себя
-    if user.is_admin and data.get("is_admin") is False:
-        # Здесь можно добавить проверку текущего пользователя, но для простоты запрещаем
+    # Получаем текущего пользователя из токена
+    current_user = get_current_user(request, db)
+    if not current_user or not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Доступ запрещён")
+
+    # Нельзя лишить себя прав администратора
+    if user.id == current_user.id and data.get("is_admin") is False:
         raise HTTPException(status_code=400, detail="Нельзя лишить себя прав администратора")
     user.is_admin = data.get("is_admin", False)
     db.commit()
