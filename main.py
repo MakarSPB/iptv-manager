@@ -8,6 +8,7 @@ import os
 import uuid
 from datetime import timedelta
 from jose import jwt
+import pwd_context
 
 from config import settings
 from models import Channel
