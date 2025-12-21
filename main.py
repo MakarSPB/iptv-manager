@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import timedelta
 from jose import jwt
-from passlib.context import CryptContext  # Исправлено: импорт pwd_context
+from passlib.context import CryptContext
 
 from config import settings
 from models import Channel
@@ -27,7 +27,7 @@ app = FastAPI(title="IPTV Playlist Manager")
 init_admin_user()
 
 # Создаем необходимые директории
-os.makedirs(settings.playlists_dir, exist_ok=True)
+os.makedirs(settings.PLAYLISTS_DIR, exist_ok=True)
 
 # Настройка шаблонов и статики
 templates = Jinja2Templates(directory="templates")
@@ -39,7 +39,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     if not token:
         return None
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         username: str = payload.get("sub")
         user = db.query(User).filter(User.username == username).first()
         return user
@@ -81,6 +81,7 @@ async def login(
     resp = RedirectResponse("/", status_code=303)
     resp.set_cookie(key="access_token", value=token, httponly=True)
     return resp
+
 
 @app.get("/logout")
 async def logout():
