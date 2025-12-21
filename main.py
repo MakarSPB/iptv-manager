@@ -152,13 +152,13 @@ async def upload_playlist(
         user: User = Depends(get_current_user)
 ):
     if not file.filename.endswith((".m3u", ".m3u8")):
-        raise HTTPException(status_code: 400, detail="Файл должен быть .m3u или .m3u8")
+        raise HTTPException(status_code=400, detail="Файл должен быть .m3u или .m3u8")
 
     content = await file.read()
     try:
         channels = parse_m3u(content.decode("utf-8", errors="ignore"))
     except Exception as e:
-        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
 
     return {"channels": channels}
 
@@ -166,7 +166,7 @@ async def upload_playlist(
 async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
-        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
 
     try:
         channels = parse_m3u(playlist.content)
@@ -177,7 +177,7 @@ async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: U
             "channels": channels
         }
     except Exception as e:
-        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
 
 @app.put("/playlists/{playlist_id}")
 async def update_playlist(
@@ -188,7 +188,7 @@ async def update_playlist(
 ):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
-        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
 
     name = data.get("name", "Без названия")
     channels = data.get("channels", [])
@@ -206,7 +206,7 @@ async def update_playlist(
 async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
-        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
 
     db.delete(playlist)
     db.commit()
@@ -216,12 +216,12 @@ async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user:
 async def parse_text(data: dict):
     content = data.get("content", "")
     if not content.strip():
-        raise HTTPException(status_code: 400, detail="Пустой контент")
+        raise HTTPException(status_code=400, detail="Пустой контент")
     try:
         channels = parse_m3u(content)
         return {"channels": channels}
     except Exception as e:
-        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
 
 @app.post("/save", response_class=JSONResponse)
 async def save_playlist(
@@ -271,7 +271,7 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
 async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
-        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 if __name__ == "__main__":
