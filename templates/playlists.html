@@ -137,8 +137,11 @@ document.querySelectorAll('tr').forEach(row => {
                 playlistId: id
             }, '*');
 
-            // Плавно скроллим к редактору
-            document.getElementById('editor').scrollIntoView({ behavior: 'smooth' });
+            // Проверяем, что элемент editor существует на текущей странице
+            const editor = document.getElementById('editor');
+            if (editor) {
+                editor.scrollIntoView({ behavior: 'smooth' });
+            }
         } catch (err) {
             alert('Ошибка: ' + err.message);
         }
