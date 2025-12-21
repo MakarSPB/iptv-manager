@@ -59,7 +59,216 @@
     <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
     {% endif %}
 </div>
+<div id="editor" style="display:none; margin-top:20px;">
+    <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
 
+    <!-- Кнопка "Добавить канал" -->
+    <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
+
+    <!-- Импорт M3U из текста -->
+    <div style="margin: 10px 0;">
+        <h4>📎 Импортировать каналы из M3U</h4>
+        <textarea id="import-area" placeholder="Вставьте сюда содержимое .m3u файла..." style="width: 100%; height: 100px;"></textarea>
+        <button class="btn btn-edit" onclick="importFromText()">Импортировать</button>
+    </div>
+
+    <table id="channel-table">
+        <tr>
+            <th>№</th>
+            <th>Имя</th>
+            <th>Логотип</th>
+            <th>Группа</th>
+            <th>URL</th>
+            <th>Переместить</th>
+            <th>Удалить</th>
+        </tr>
+    </table>
+    <input type="text" id="save-name" placeholder="Название плейлиста">
+    <button class="btn btn-edit" onclick="save()">Сохранить</button>
+    <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
+    <p id="result-url"></p>
+</div>
+
+<script>
+    // === Переменные для редактора ===
+    let currentPlaylistId = null;
+    let channels = [];
+
+    // === Функции редактора ===
+    function addNewChannel() {
+        channels.push({ name: 'Новый канал', tvg_name: '', logo: '', group_title: '', url: '' });
+        renderChannels();
+    }
+
+    function renderChannels() {
+        const table = document.getElementById('channel-table');
+        // Удаляем все строки, кроме заголовка
+        while (table.rows.length > 1) {
+            table.deleteRow(1);
+        }
+
+        channels.forEach((ch, index) => {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = index + 1;
+
+            const nameCell = row.insertCell(1);
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'channel-input';
+            nameInput.value = ch.name || '';
+            nameInput.oninput = () => { channels[index].name = nameInput.value; };
+            nameCell.appendChild(nameInput);
+
+            const logoCell = row.insertCell(2);
+            const logoInput = document.createElement('input');
+            logoInput.type = 'text';
+            logoInput.className = 'channel-input';
+            logoInput.value = ch.logo || '';
+            logoInput.oninput = () => { channels[index].logo = logoInput.value; };
+            logoCell.appendChild(logoInput);
+
+            const groupCell = row.insertCell(3);
+            const groupInput = document.createElement('input');
+            groupInput.type = 'text';
+            groupInput.className = 'channel-input';
+            groupInput.value = ch.group_title || '';
+            groupInput.oninput = () => { channels[index].group_title = groupInput.value; };
+            groupCell.appendChild(groupInput);
+
+            const urlCell = row.insertCell(4);
+            const urlInput = document.createElement('input');
+            urlInput.type = 'text';
+            urlInput.className = 'channel-input';
+            urlInput.value = ch.url || '';
+            urlInput.oninput = () => { channels[index].url = urlInput.value; };
+            urlCell.appendChild(urlInput);
+
+            // Кнопки перемещения
+            const moveCell = row.insertCell(5);
+            moveCell.className = 'move-controls';
+            moveCell.innerHTML = `
+                <button class="btn btn-move" onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+                <button class="btn btn-move" onclick="moveDown(${index})" ${index === channels.length - 1 ? 'disabled' : ''}>⬇️</button>
+                <button class="btn btn-move" onclick="moveToTop(${index})">🔝</button>
+                <button class="btn btn-move" onclick="moveToBottom(${index})">🔚</button>
+            `;
+
+            // Кнопка удаления
+            const delCell = row.insertCell(6);
+            delCell.innerHTML = `<button class="btn btn-delete" onclick="removeRow(${index})">❌</button>`;
+        });
+    }
+
+    function moveUp(index) {
+        if (index > 0) {
+            [channels[index], channels[index - 1]] = [channels[index - 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveDown(index) {
+        if (index < channels.length - 1) {
+            [channels[index], channels[index + 1]] = [channels[index + 1], channels[index]];
+            renderChannels();
+        }
+    }
+
+    function moveToTop(index) {
+        const ch = channels.splice(index, 1)[0];
+        channels.unshift(ch);
+        renderChannels();
+    }
+
+    function moveToBottom(index) {
+        const ch = channels.splice(index, 1)[0];
+        channels.push(ch);
+        renderChannels();
+    }
+
+    function removeRow(index) {
+        if (confirm('Удалить канал?')) {
+            channels.splice(index, 1);
+            renderChannels();
+        }
+    }
+
+    function cancelEdit() {
+        document.getElementById('editor').style.display = 'none';
+        currentPlaylistId = null;
+        channels = [];
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function importFromText() {
+        const text = document.getElementById('import-area').value;
+        if (!text.trim()) {
+            alert('Введите содержимое M3U');
+            return;
+        }
+
+        try {
+            const response = await fetch('/parse-text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                channels = data.channels;
+                renderChannels();
+                document.getElementById('import-area').value = '';
+                alert(`Импортировано ${channels.length} каналов`);
+            } else {
+                alert('Ошибка импорта');
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+
+    async function save() {
+        const name = document.getElementById('save-name').value.trim() || 'Без названия';
+        if (channels.length === 0) {
+            alert('Нет каналов для сохранения');
+            return;
+        }
+
+        const m3uContent = `#EXTM3U\n${channels.map(ch => {
+            const tvg = ch.tvg_name ? ` tvg-name="${escapeHtml(ch.tvg_name)}"` : '';
+            const logo = ch.logo ? ` tvg-logo="${escapeHtml(ch.logo)}"` : '';
+            const group = ch.group_title ? ` group-title="${escapeHtml(ch.group_title)}"` : '';
+            return `#EXTINF:-1${tvg}${logo}${group},${escapeHtml(ch.name)}\n${escapeHtml(ch.url)}`;
+        }).join('\n')}`;
+
+        try {
+            const response = await fetch(`/playlists/${currentPlaylistId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, channels })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('result-url').innerHTML = `
+                    Сохранено! <a href="${data.url}" target="_blank">Открыть</a> |
+                    <a href="${data.url}" download="${name}.m3u">Скачать</a>
+                `;
+                // Обновляем таблицу
+                location.reload();
+            } else {
+                const data = await response.json();
+                alert('Ошибка: ' + data.detail);
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+</script>
 <script>
     // Обработчик чекбокса "Общак"
     document.querySelectorAll('.share-toggle').forEach(checkbox => {
@@ -86,7 +295,7 @@
         });
     });
 
-    // Функция редактирования плейлиста
+    // Функция редактирования плейлиста — открывает редактор на текущей странице
     async function editPlaylist(id) {
         try {
             const response = await fetch(`/playlists/${id}/edit`);
@@ -95,19 +304,19 @@
             }
             const data = await response.json();
 
-            // Отправляем данные в index.html (если он загружен)
-            const event = new CustomEvent('loadPlaylist', { detail: { data, playlistId: id } });
-            window.dispatchEvent(event);
+            // Сохраняем ID плейлиста для последующего сохранения
+            currentPlaylistId = id;
+            document.getElementById('save-name').value = data.name || 'Без названия';
 
-            // Пытаемся прокрутить к редактору, если он есть
-            const editor = document.getElementById('editor');
-            if (editor) {
-                editor.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                // Если editor нет — возможно, мы на отдельной странице
-                // Перенаправляем на главную
-                alert('Перейдите на главную страницу для редактирования');
-            }
+            // Отрисовываем каналы в таблице редактора
+            channels = data.channels;
+            renderChannels();
+
+            // Показываем редактор
+            document.getElementById('editor').style.display = 'block';
+
+            // Прокручиваем к редактору
+            document.getElementById('editor').scrollIntoView({ behavior: 'smooth' });
         } catch (err) {
             alert('Ошибка: ' + err.message);
         }
