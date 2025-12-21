@@ -1,15 +1,42 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from config import settings
+from sqlalchemy.orm import sessionmaker, relationship
+from datetime import datetime
 
 # Создаем движок базы данных
 engine = create_engine(
-    settings.DATABASE_URL, connect_args={"check_same_thread": False}
+    "sqlite:///./data/users.db", connect_args={"check_same_thread": False}
 )
 
 # Создаем базовый класс для моделей
 Base = declarative_base()
+
+# Модель пользователя
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password = Column(String)
+    is_admin = Column(Integer, default=0, server_default="0")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Связь с плейлистами
+    playlists = relationship("Playlist", back_populates="owner")
+
+# Модель плейлиста
+class Playlist(Base):
+    __tablename__ = "playlists"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, index=True)
+    filename = Column(String)
+    content = Column(Text)
+    owner_id = Column(Integer, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Связь с пользователем
+    owner = relationship("User", back_populates="playlists")
 
 # Создаем фабрику сессий
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -21,3 +48,6 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Создаем таблицы при запуске
+Base.metadata.create_all(bind=engine)

@@ -15,7 +15,6 @@ class Settings:
 
     # Пути
     PLAYLISTS_DIR: str = os.getenv("PLAYLISTS_DIR", "uploads")
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./data/users.db")
 
     # Администратор по умолчанию
     ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")

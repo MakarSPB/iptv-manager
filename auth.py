@@ -32,7 +32,11 @@ def init_admin_user():
         user = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
         if not user:
             hashed_password = get_password_hash(settings.ADMIN_PASSWORD)
-            admin_user = User(username=settings.ADMIN_USERNAME, password=hashed_password, is_admin=True)
+            admin_user = User(
+                username=settings.ADMIN_USERNAME,
+                password=hashed_password,
+                is_admin=1
+            )
             db.add(admin_user)
             db.commit()
     finally:
