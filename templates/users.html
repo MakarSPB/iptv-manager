@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Управление пользователями</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .container {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .btn {
+            padding: 6px 12px;
+            margin: 2px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-admin {
+            background-color: #6f42c1;
+            color: white;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .admin-only {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><strong>IPTV Manager</strong></div>
+        <div class="links">
+            <a href="/">Главная</a>
+            <a href="/playlists">Мои плейлисты</a>
+            <a href="/profile">Профиль</a>
+            <a href="/users">Пользователи</a>
+            <a href="/logout">Выход</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>👥 Управление пользователями</h2>
+
+        <form method="post" action="/users" onsubmit="return validateForm()">
+            <div class="form-group">
+                <label>Имя пользователя:</label>
+                <input type="text" name="username" required minlength="3" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label>Пароль:</label>
+                <input type="password" name="password" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="is_admin" value="true"> Администратор
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">➕ Создать пользователя</button>
+        </form>
+
+        <hr>
+
+        <h3>Существующие пользователи</h3>
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Тип</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>
+                        {% if u.is_admin %}
+                            <span class="btn btn-admin">Администратор</span>
+                        {% else %}
+                            Пользователь
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not u.is_admin %}
+                            <button class="btn btn-danger" onclick="deleteUser({{ u.id }})">Удалить</button>
+                        {% else %}
+                            <span class="admin-only">Нельзя удалить</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Нет созданных пользователей.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function validateForm() {
+            const username = document.querySelector("input[name='username']").value;
+            if (username.includes(' ')) {
+                alert("Имя пользователя не должно содержать пробелов");
+                return false;
+            }
+            return true;
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm("Удалить пользователя? Это действие нельзя отменить.")) return;
+
+            try {
+                const res = await fetch(`/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert('Ошибка: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

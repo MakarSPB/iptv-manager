@@ -274,6 +274,55 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Плейлист не найден")
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
+@app.get("/users", response_class=HTMLResponse)
+async def users_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or not user.is_admin:
+        raise HTTPException(status_code=403, detail="Доступ запрещён")
+
+    users = db.query(User).all()
+    return templates.TemplateResponse(
+        "users.html",
+        {
+            "request": request,
+            "user": user,
+            "users": users
+        }
+    )
+
+@app.post("/users", response_class=JSONResponse)
+async def create_user(
+        username: str = Form(...),
+        password: str = Form(...),
+        is_admin: bool = Form(False),
+        db: Session = Depends(get_db)
+):
+    existing_user = db.query(User).filter(User.username == username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Пользователь уже существует")
+
+    hashed_password = get_password_hash(password)
+    new_user = User(
+        username=username,
+        password=hashed_password,
+        is_admin=bool(is_admin)
+    )
+    db.add(new_user)
+    db.commit()
+    return {"message": "Пользователь создан", "id": new_user.id}
+
+@app.delete("/users/{user_id}")
+async def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    if user.is_admin:
+        raise HTTPException(status_code=400, detail="Нельзя удалить администратора")
+    db.delete(user)
+    db.commit()
+    return {"message": "Пользователь удалён"}
+
+
 if __name__ == "__main__":
     print("=== Загруженные настройки ===")
     print(f"DEBUG: {settings.DEBUG}")
