@@ -10,7 +10,6 @@
     <div class="links">
         <a href="/">Главная</a>
         <a href="/playlists">Мои плейлисты</a>
-        <a href="/shared">Общак</a>
         <a href="/profile">Профиль</a>
         {% if user.is_admin %}
         <a href="/users">Пользователи</a>
@@ -32,6 +31,10 @@
             <input type="password" name="password" required minlength="6">
         </div>
         <div class="form-group">
+            <label>Эл. почта:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
             <label>
                 <input type="checkbox" name="is_admin" value="true"> Администратор
             </label>
@@ -48,6 +51,7 @@
         <tr>
             <th>ID</th>
             <th>Имя</th>
+            <th>Email</th>
             <th>Тип</th>
             <th>Действия</th>
         </tr>
@@ -57,6 +61,7 @@
         <tr>
             <td>{{ u.id }}</td>
             <td>{{ u.username }}</td>
+            <td>{{ u.email or "— "}}</td>
             <td>
                 {% if u.is_admin %}
                 <span class="btn btn-admin">Администратор</span>
@@ -125,14 +130,8 @@
 
     function closeModal() {
         document.getElementById('successModal').style.display = 'none';
-        window.location.href = '/users'; // Остаемся на странице пользователей
+        window.location.href = '/users';
     }
 </script>
-<footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
-    &copy; 2025
-    <a href="https://github.com/Makar-aka" target="_blank" style="color: #007bff; text-decoration: none;">
-        MakarSPB
-    </a>
-</footer>
 </body>
 </html>

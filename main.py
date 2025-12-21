@@ -390,6 +390,7 @@ async def users_page(request: Request, db: Session = Depends(get_db)):
 async def create_user(
         username: str = Form(...),
         password: str = Form(...),
+        email: str = Form(...),
         is_admin: bool = Form(False),
         db: Session = Depends(get_db)
 ):
@@ -401,12 +402,12 @@ async def create_user(
     new_user = User(
         username=username,
         password=hashed_password,
+        email=email,
         is_admin=bool(is_admin)
     )
     db.add(new_user)
     db.commit()
 
-    # Перенаправляем с параметром, чтобы показать модальное окно
     return RedirectResponse("/users?created=true", status_code=303)
 
 @app.delete("/users/{user_id}")
