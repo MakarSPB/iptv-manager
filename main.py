@@ -15,7 +15,7 @@ from models import Channel
 from utils.parser import parse_m3u
 from utils.generator import generate_m3u
 from database import SessionLocal, User, Playlist
-from auth import authenticate_admin, create_access_token, get_db, init_admin_user
+from auth import authenticate_admin, create_access_token, init_admin_user
 from utils.generate_id import generate_short_id
 
 # Создаем контекст для хэширования паролей
@@ -34,7 +34,7 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # === JWT и авторизация ===
-def get_current_user(request: Request, db: Session = Depends(get_db)):
+def get_current_user(request: Request, db: Session = Depends(database.get_db)):
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -59,13 +59,13 @@ async def login(
         response: Response,
         username: str = Form(...),
         password: str = Form(...),
-        db: Session = Depends(get_db)
+        db: Session = Depends(database.get_db)
 ):
     # Проверяем администратора
     if authenticate_admin(username, password):
         user = db.query(User).filter(User.username == username).first()
         if not user:
-            user = User(username=username, password="", is_admin=True)
+            user = User(username=username, password="", is_admin=1)
             db.add(user)
             db.commit()
     else:
@@ -82,7 +82,6 @@ async def login(
     resp.set_cookie(key="access_token", value=token, httponly=True)
     return resp
 
-
 @app.get("/logout")
 async def logout():
     resp = RedirectResponse("/login")
@@ -90,7 +89,7 @@ async def logout():
     return resp
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: Session = Depends(get_db)):
+async def index(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -106,7 +105,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/playlists", response_class=HTMLResponse)
-async def my_playlists(request: Request, db: Session = Depends(get_db)):
+async def my_playlists(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -122,7 +121,7 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/profile", response_class=HTMLResponse)
-async def profile(request: Request, db: Session = Depends(get_db)):
+async def profile(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -139,7 +138,7 @@ async def profile(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/upload", response_class=HTMLResponse)
-async def upload_page(request: Request, db: Session = Depends(get_db)):
+async def upload_page(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -149,7 +148,7 @@ async def upload_page(request: Request, db: Session = Depends(get_db)):
 @app.post("/upload", response_class=JSONResponse)
 async def upload_playlist(
         file: UploadFile = File(...),
-        db: Session = Depends(get_db),
+        db: Session = Depends(database.get_db),
         user: User = Depends(get_current_user)
 ):
     if not file.filename.endswith((".m3u", ".m3u8")):
@@ -164,7 +163,7 @@ async def upload_playlist(
     return {"channels": channels}
 
 @app.get("/playlists/{playlist_id}/edit")
-async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def edit_playlist(playlist_id: str, db: Session = Depends(database.get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
         raise HTTPException(status_code=404, detail="Плейлист не найден")
@@ -184,7 +183,7 @@ async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: U
 async def update_playlist(
         playlist_id: str,
         data: dict,
-        db: Session = Depends(get_db),
+        db: Session = Depends(database.get_db),
         user: User = Depends(get_current_user)
 ):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
@@ -204,7 +203,7 @@ async def update_playlist(
     return {"message": "Плейлист обновлён", "url": f"/playlists/{playlist_id}.m3u"}
 
 @app.delete("/playlists/{playlist_id}")
-async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def delete_playlist(playlist_id: str, db: Session = Depends(database.get_db), user: User = Depends(get_current_user)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
     if not playlist:
         raise HTTPException(status_code=404, detail="Плейлист не найден")
@@ -227,7 +226,7 @@ async def parse_text(data: dict):
 @app.post("/save", response_class=JSONResponse)
 async def save_playlist(
         data: dict,
-        db: Session = Depends(get_db),
+        db: Session = Depends(database.get_db),
         user: User = Depends(get_current_user)
 ):
     name = data.get("name", "Без названия")
@@ -253,7 +252,7 @@ async def save_playlist(
     return {"message": "Сохранено", "url": url}
 
 @app.get("/new", response_class=HTMLResponse)
-async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
+async def new_playlist_page(request: Request, db: Session = Depends(database.get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -269,7 +268,7 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/playlists/{playlist_id}.m3u")
-async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
+async def serve_playlist(playlist_id: str, db: Session = Depends(database.get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
         raise HTTPException(status_code=404, detail="Плейлист не найден")
@@ -278,8 +277,8 @@ async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host=settings.app_host,
-        port=settings.app_port,
-        reload=settings.debug,
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
+        reload=settings.DEBUG,
         log_level="info"
     )
