@@ -59,34 +59,36 @@
     <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
     {% endif %}
 </div>
-<div id="editor" style="display:none; margin-top:20px;">
-    <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
+<div class="container">
+    <div id="editor" style="display:none; margin-top:20px; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;">
+        <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
 
-    <!-- Кнопка "Добавить канал" -->
-    <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
+        <!-- Кнопка "Добавить канал" -->
+        <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
 
-    <!-- Импорт M3U из текста -->
-    <div style="margin: 10px 0;">
-        <h4>📎 Импортировать каналы из M3U</h4>
-        <textarea id="import-area" placeholder="Вставьте сюда содержимое .m3u файла..." style="width: 100%; height: 100px;"></textarea>
-        <button class="btn btn-edit" onclick="importFromText()">Импортировать</button>
+        <!-- Импорт M3U из текста -->
+        <div style="margin: 10px 0;">
+            <h4>📎 Импортировать каналы из M3U</h4>
+            <textarea id="import-area" placeholder="Вставьте сюда содержимое .m3u файла..." style="width: 100%; height: 100px;"></textarea>
+            <button class="btn btn-edit" onclick="importFromText()">Импортировать</button>
+        </div>
+
+        <table id="channel-table">
+            <tr>
+                <th>№</th>
+                <th>Имя</th>
+                <th>Логотип</th>
+                <th>Группа</th>
+                <th>URL</th>
+                <th>Переместить</th>
+                <th>Удалить</th>
+            </tr>
+        </table>
+        <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
+        <button class="btn btn-edit" onclick="save()">Сохранить</button>
+        <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
+        <p id="result-url"></p>
     </div>
-
-    <table id="channel-table">
-        <tr>
-            <th>№</th>
-            <th>Имя</th>
-            <th>Логотип</th>
-            <th>Группа</th>
-            <th>URL</th>
-            <th>Переместить</th>
-            <th>Удалить</th>
-        </tr>
-    </table>
-    <input type="text" id="save-name" placeholder="Название плейлиста">
-    <button class="btn btn-edit" onclick="save()">Сохранить</button>
-    <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
-    <p id="result-url"></p>
 </div>
 
 <script>
