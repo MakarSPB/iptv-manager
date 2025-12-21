@@ -1,16 +1,14 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import os
 
-# Создаем директорию для базы данных, если её нет
+# Создаем директорию для базы данных
 os.makedirs("data", exist_ok=True)
 
 # Создаем движок базы данных
-engine = create_engine(
-    "sqlite:///data/users.db", connect_args={"check_same_thread": False}
-)
+engine = create_engine("sqlite:///data/users.db", connect_args={"check_same_thread": False})
 
 # Создаем базовый класс для моделей
 Base = declarative_base()
@@ -25,7 +23,7 @@ class User(Base):
     is_admin = Column(Integer, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Связь с плейлистами (обратная сторона)
+    # Связь с плейлистами
     playlists = relationship("Playlist", back_populates="owner", foreign_keys="[Playlist.owner_id]")
 
 # Модель плейлиста
@@ -36,10 +34,11 @@ class Playlist(Base):
     name = Column(String, index=True)
     filename = Column(String)
     content = Column(Text)
-    owner_id = Column(Integer, ForeignKey("users.id"), index=True)  # Внешний ключ
+    owner_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_shared = Column(Boolean, default=False)  # Новое поле: общий доступ
 
-    # Связь с пользователем (главная сторона)
+    # Связь с пользователем
     owner = relationship("User", back_populates="playlists")
 
 # Создаем фабрику сессий

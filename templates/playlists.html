@@ -10,6 +10,7 @@
     <div class="links">
         <a href="/">Главная</a>
         <a href="/playlists">Мои плейлисты</a>
+        <a href="/shared">Общак</a>
         <a href="/profile">Профиль</a>
         {% if user.is_admin %}
         <a href="/users">Пользователи</a>
@@ -20,7 +21,6 @@
 
 <div class="container">
     <h2>📁 Мои плейлисты</h2>
-
     {% if playlists %}
     <table>
         <thead>
@@ -28,6 +28,8 @@
             <th>ID</th>
             <th>Название</th>
             <th>Файл</th>
+            <th>Каналов</th>
+            <th>Общак</th>
             <th>Действия</th>
         </tr>
         </thead>
@@ -37,6 +39,16 @@
             <td>{{ pl.id }}</td>
             <td>{{ pl.name }}</td>
             <td>{{ pl.filename }}</td>
+            <td>
+                {% set channels = parse_m3u(pl.content) %}
+                {{ channels | length }}
+            </td>
+            <td>
+                <input type="checkbox"
+                       class="share-toggle"
+                       data-id="{{ pl.id }}"
+                       {% if pl.is_shared %}checked{% endif %}>
+            </td>
             <td class="actions">
                 <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
                 <a class="btn btn-download" href="/{{ pl.id }}.m3u" download>Скачать</a>
@@ -49,62 +61,67 @@
     {% else %}
     <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
     {% endif %}
-
-    <a href="/upload" class="btn btn-edit">Загрузить новый плейлист</a>
 </div>
 
 <script>
-    let currentPlaylistId = null;
-    let channels = [];
+    // Обновляем статус "общак" при переключении чекбокса
+    document.querySelectorAll('.share-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', async function() {
+            const playlistId = this.dataset.id;
+            const isShared = this.checked;
 
-    async function editPlaylist(id) {
-        try {
-            const res = await fetch(`/playlists/${id}/edit`);
-            const data = await res.json();
+            try {
+                const response = await fetch(`/playlists/${playlistId}/share`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ is_shared: isShared })
+                });
 
-            // Переходим на главную, где находится редактор
-            window.location.href = '/';
-
-            // Через небольшую задержку передаём данные в редактор
-            setTimeout(() => {
-                window.postMessage({ action: 'loadPlaylist', data: data, playlistId: id }, '*');
-            }, 500);
-        } catch (err) {
-            alert('Ошибка загрузки плейлиста: ' + err.message);
-        }
-    }
-
-    async function deletePlaylist(id) {
-        if (!confirm('Вы уверены, что хотите удалить этот плейлист?')) return;
-
-        try {
-            const res = await fetch(`/playlists/${id}`, {
-                method: 'DELETE'
-            });
-
-            if (res.ok) {
-                location.reload();
-            } else {
-                const data = await res.json();
-                alert('Ошибка: ' + data.detail);
+                if (!response.ok) {
+                    throw new Error('Ошибка при обновлении статуса');
+                }
+            } catch (err) {
+                alert('Не удалось обновить статус общего доступа');
+                this.checked = !isShared; // Возвращаем предыдущее состояние
             }
-        } catch (err) {
-            alert('Ошибка удаления: ' + err.message);
+        });
+    });
+
+    // Добавляем функцию парсинга M3U для шаблона
+function parse_m3u(content) {
+    const lines = content.split('\n');
+    const channels = [];
+    let currentChannel = null;
+
+    for (const line of lines) {
+        if (line.startsWith('#EXTINF:')) {
+            const match = line.match(/#EXTINF:[^,]*,(.+)$/);
+            if (match) {
+                currentChannel = { name: match[1].trim() };
+            }
+        } else if (line.startsWith('http') && currentChannel) {
+            currentChannel.url = line.trim();
+            channels.push(currentChannel);
+            currentChannel = null;
         }
     }
+    return channels;
+}
 
-    // Обработка сообщения для загрузки плейлиста на главной странице
-    window.addEventListener('message', function(event) {
-        if (event.data.action === 'loadPlaylist') {
-            const data = event.data.data;
-            currentPlaylistId = event.data.playlistId;
-            channels = data.channels;
-            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
-            document.getElementById('save-name').value = data.name || 'Без названия';
-            renderChannels(channels);
-            document.getElementById('editor').style.display = 'block';
+// Обновляем отображение количества каналов
+document.querySelectorAll('tr').forEach(row => {
+    const contentCell = row.querySelector('[data-content]');
+    if (contentCell) {
+        const content = contentCell.dataset.content;
+        const channels = parse_m3u(content);
+        const countCell = row.querySelector('.channel-count');
+        if (countCell) {
+            countCell.textContent = channels.length;
         }
-    });
+    }
+});
 </script>
 </body>
 </html>

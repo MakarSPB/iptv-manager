@@ -324,6 +324,55 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Пользователь удалён"}
 
+@app.get("/shared", response_class=HTMLResponse)
+async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    # Получаем все плейлисты, отмеченные как общие
+    shared_playlists = (
+        db.query(Playlist, User.username.label("owner_username"))
+        .join(User, Playlist.owner_id == User.id)
+        .filter(Playlist.is_shared == True)
+        .all()
+    )
+
+    # Добавляем количество каналов
+    playlists_with_info = []
+    for playlist, owner_username in shared_playlists:
+        try:
+            channels = parse_m3u(playlist.content)
+            channel_count = len(channels)
+        except:
+            channel_count = 0
+        playlists_with_info.append({
+            "playlist": playlist,
+            "owner_username": owner_username,
+            "channel_count": channel_count
+        })
+
+    return templates.TemplateResponse(
+        "shared.html",
+        {
+            "request": request,
+            "user": user,
+            "playlists": playlists_with_info
+        }
+    )
+@app.post("/playlists/{playlist_id}/share")
+async def toggle_shared_status(
+        playlist_id: str,
+        data: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
+
+    playlist.is_shared = data.get("is_shared", False)
+    db.commit()
+
+    return {"message": "Статус общего доступа обновлён"}
 
 if __name__ == "__main__":
     print("=== Загруженные настройки ===")

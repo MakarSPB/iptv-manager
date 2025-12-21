@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Общак</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo"><strong>IPTV Manager</strong></div>
+        <div class="links">
+            <a href="/">Главная</a>
+            <a href="/playlists">Мои плейлисты</a>
+            <a href="/shared">Общак</a>
+            <a href="/profile">Профиль</a>
+            {% if user.is_admin %}
+                <a href="/users">Пользователи</a>
+            {% endif %}
+            <a href="/logout">Выход</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>🌐 Общие плейлисты</h2>
+
+        {% if playlists %}
+        <table>
+            <thead>
+            <tr>
+                <th>Название</th>
+                <th>Владелец</th>
+                <th>Каналов</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in playlists %}
+            <tr>
+                <td>{{ item.playlist.name }}</td>
+                <td>{{ item.owner_username }}</td>
+                <td>{{ item.channel_count }}</td>
+                <td class="actions">
+                    <a class="btn btn-download" href="/{{ item.playlist.id }}.m3u" download>Скачать</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">Пока нет общих плейлистов.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
