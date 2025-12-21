@@ -5,3 +5,4 @@ pydantic-settings
 SQLAlchemy
 passlib[argon2]
 python-jose[cryptography]
+python-multipart
