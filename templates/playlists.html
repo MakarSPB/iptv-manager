@@ -61,7 +61,7 @@
 </div>
 
 <script>
-    // Обновляем статус "общак" при переключении чекбокса
+    // Обработчик чекбокса "Общак"
     document.querySelectorAll('.share-toggle').forEach(checkbox => {
         checkbox.addEventListener('change', async function() {
             const playlistId = this.dataset.id;
@@ -81,47 +81,12 @@
                 }
             } catch (err) {
                 alert('Не удалось обновить статус общего доступа');
-                this.checked = !isShared; // Возвращаем предыдущее состояние
+                this.checked = !isShared;
             }
         });
     });
 
-    // Добавляем функцию парсинга M3U для шаблона
-function parse_m3u(content) {
-    const lines = content.split('\n');
-    const channels = [];
-    let currentChannel = null;
-
-    for (const line of lines) {
-        if (line.startsWith('#EXTINF:')) {
-            const match = line.match(/#EXTINF:[^,]*,(.+)$/);
-            if (match) {
-                currentChannel = { name: match[1].trim() };
-            }
-        } else if (line.startsWith('http') && currentChannel) {
-            currentChannel.url = line.trim();
-            channels.push(currentChannel);
-            currentChannel = null;
-        }
-    }
-    return channels;
-}
-
-// Обновляем отображение количества каналов
-document.querySelectorAll('tr').forEach(row => {
-    const contentCell = row.querySelector('[data-content]');
-    if (contentCell) {
-        const content = contentCell.dataset.content;
-        const channels = parse_m3u(content);
-        const countCell = row.querySelector('.channel-count');
-        if (countCell) {
-            countCell.textContent = channels.length;
-        }
-    }
-});
-
-</script>
-<script>
+    // Функция редактирования плейлиста
     async function editPlaylist(id) {
         try {
             const response = await fetch(`/playlists/${id}/edit`);
@@ -130,17 +95,18 @@ document.querySelectorAll('tr').forEach(row => {
             }
             const data = await response.json();
 
-            // Отправляем данные в основную страницу (index)
-            window.parent.postMessage({
-                action: 'loadPlaylist',
-                data: data,
-                playlistId: id
-            }, '*');
+            // Отправляем данные в index.html (если он загружен)
+            const event = new CustomEvent('loadPlaylist', { detail: { data, playlistId: id } });
+            window.dispatchEvent(event);
 
-            // Проверяем, что элемент editor существует на текущей странице
+            // Пытаемся прокрутить к редактору, если он есть
             const editor = document.getElementById('editor');
             if (editor) {
                 editor.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                // Если editor нет — возможно, мы на отдельной странице
+                // Перенаправляем на главную
+                alert('Перейдите на главную страницу для редактирования');
             }
         } catch (err) {
             alert('Ошибка: ' + err.message);
