@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
   iptv-manager:
     build: .
     ports:
-      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
+      - "${APP_PORT:-8000}:${APP_PORT:-8024}"
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
