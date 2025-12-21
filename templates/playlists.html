@@ -221,10 +221,11 @@
             });
             if (response.ok) {
                 const data = await response.json();
-                channels = data.channels;
+                // === ИСПРАВЛЕНО: добавляем к существующим, а не заменяем ===
+                channels = [...channels, ...data.channels];
                 renderChannels();
                 document.getElementById('import-area').value = '';
-                alert(`Импортировано ${channels.length} каналов`);
+                alert(`Импортировано ${data.channels.length} каналов`);
             } else {
                 alert('Ошибка импорта');
             }
