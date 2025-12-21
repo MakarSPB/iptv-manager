@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import os
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -108,7 +108,7 @@ def generate_captcha():
 async def register_page(request: Request):
     question, answer = generate_captcha()
     # Сохраняем ответ в "сессии" (упрощённо)
-    session_id = "temp_session"  # В реальности используйте настоящую сессию
+    session_id = str(uuid.uuid4())  # Уникальный ID для каждого пользователя
     captcha_store[session_id] = answer
     return templates.TemplateResponse("register.html", {
         "request": request,
