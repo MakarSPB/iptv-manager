@@ -34,25 +34,22 @@
         </tr>
         </thead>
         <tbody>
-        {% for pl in playlists %}
+        {% for item in playlists %}
         <tr>
-            <td>{{ pl.id }}</td>
-            <td>{{ pl.name }}</td>
-            <td>{{ pl.filename }}</td>
-            <td>
-                {% set channels = parse_m3u(pl.content) %}
-                {{ channels | length }}
-            </td>
+            <td>{{ item.playlist.id }}</td>
+            <td>{{ item.playlist.name }}</td>
+            <td>{{ item.playlist.filename }}</td>
+            <td>{{ item.channel_count }}</td>
             <td>
                 <input type="checkbox"
                        class="share-toggle"
-                       data-id="{{ pl.id }}"
-                       {% if pl.is_shared %}checked{% endif %}>
+                       data-id="{{ item.playlist.id }}"
+                       {% if item.playlist.is_shared %}checked{% endif %}>
             </td>
             <td class="actions">
-                <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
-                <a class="btn btn-download" href="/{{ pl.id }}.m3u" download>Скачать</a>
-                <button class="btn btn-delete" onclick="deletePlaylist('{{ pl.id }}')">Удалить</button>
+                <button class="btn btn-edit" onclick="editPlaylist('{{ item.playlist.id }}')">Редактировать</button>
+                <a class="btn btn-download" href="/{{ item.playlist.id }}.m3u" download>Скачать</a>
+                <button class="btn btn-delete" onclick="deletePlaylist('{{ item.playlist.id }}')">Удалить</button>
             </td>
         </tr>
         {% endfor %}

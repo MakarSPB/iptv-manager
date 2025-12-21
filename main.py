@@ -111,12 +111,26 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login")
 
     playlists = db.query(Playlist).filter(Playlist.owner_id == user.id).all()
+
+    # Добавляем количество каналов
+    playlists_with_info = []
+    for pl in playlists:
+        try:
+            channels = parse_m3u(pl.content)
+            channel_count = len(channels)
+        except Exception:
+            channel_count = 0
+        playlists_with_info.append({
+            "playlist": pl,
+            "channel_count": channel_count
+        })
+
     return templates.TemplateResponse(
         "playlists.html",
         {
             "request": request,
             "user": user,
-            "playlists": playlists
+            "playlists": playlists_with_info
         }
     )
 
