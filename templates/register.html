@@ -3,96 +3,55 @@
 <head>
     <title>Регистрация</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .login-container {
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin: 15px 0;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        input[type="text"],
-        input[type="password"],
-        input[type="email"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .btn {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .error {
-            color: #dc3545;
-            font-size: 14px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        .links {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-        .links a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-    </style>
 </head>
 <body>
-    <nav>
-        <div class="logo"><strong>IPTV Manager</strong></div>
-        <div class="links">
-            <a href="/login">Вход</a>
-            <a href="/register">Регистрация</a>
-        </div>
-    </nav>
-
-    <div class="login-container">
-        <h2 style="text-align: center; margin-bottom: 20px;">📝 Регистрация</h2>
-
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
-
-        <form method="post" action="/register">
-            <div class="form-group">
-                <label>Логин:</label>
-                <input type="text" name="username" required minlength="3" maxlength="50">
-            </div>
-            <div class="form-group">
-                <label>Пароль:</label>
-                <input type="password" name="password" required minlength="6">
-            </div>
-            <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label>Капча (abc123):</label>
-                <input type="text" name="captcha" required placeholder="Введите: abc123">
-            </div>
-            <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
-        </form>
-
-        <div class="links">
-            Уже есть аккаунт? <a href="/login">Войти</a>
-        </div>
+<nav>
+    <div class="logo"><strong>IPTV Manager</strong></div>
+    <div class="links">
+        <a href="/login">Вход</a>
+        <a href="/register">Регистрация</a>
     </div>
+</nav>
+
+<div class="login-container">
+    <div class="logo">
+        <h1>📝 Регистрация</h1>
+    </div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/register">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+
+        <div class="form-group">
+            <label for="username">Логин</label>
+            <input type="text" id="username" name="username" placeholder="Введите логин" required minlength="3" maxlength="50">
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" placeholder="Введите пароль" required minlength="6">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="user@example.com" required>
+        </div>
+        <div class="form-group">
+            <label for="user_answer">Решите: {{ captcha_question }}</label>
+            <input type="text" id="user_answer" name="user_answer" placeholder="Введите ответ" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+    </form>
+
+    <div class="links">
+        Уже есть аккаунт? <a href="/login">Войти</a>
+    </div>
+</div>
+
+<footer class="footer">
+    &copy; 2025
+    <a href="https://github.com/Makar-aka" target="_blank">MakarSPB</a>
+</footer>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import uvicorn
+import random
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, Depends, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -89,9 +90,31 @@ async def logout():
     resp.delete_cookie("access_token")
     return resp
 
+captcha_store = {}
+
+def generate_captcha():
+    num1 = random.randint(1, 10)
+    num2 = random.randint(1, 10)
+    ops = ["+", "-"]
+    op = random.choice(ops)
+    if op == "+":
+        result = num1 + num2
+    else:
+        result = abs(num1 - num2)
+    question = f"{num1} {op} {num2} = ?"
+    return question, result
+
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    question, answer = generate_captcha()
+    # Сохраняем ответ в "сессии" (упрощённо)
+    session_id = "temp_session"  # В реальности используйте настоящую сессию
+    captcha_store[session_id] = answer
+    return templates.TemplateResponse("register.html", {
+        "request": request,
+        "captcha_question": question,
+        "session_id": session_id
+    })
 
 @app.post("/register")
 async def register_user(
@@ -99,22 +122,33 @@ async def register_user(
         username: str = Form(...),
         password: str = Form(...),
         email: str = Form(...),
-        captcha: str = Form(...),
+        user_answer: str = Form(...),
+        session_id: str = Form(...),
         db: Session = Depends(get_db)
 ):
-    # Простая проверка капчи (для примера)
-    if captcha.lower() != "abc123":
+    # Проверяем капчу
+    correct_answer = captcha_store.get(session_id)
+    if not correct_answer or str(correct_answer) != user_answer.strip():
+        # Пересоздаём капчу при ошибке
+        question, new_answer = generate_captcha()
+        captcha_store[session_id] = new_answer
         return templates.TemplateResponse("register.html", {
             "request": request,
-            "error": "Неверная капча"
+            "error": "Неверный ответ на капчу",
+            "captcha_question": question,
+            "session_id": session_id
         })
 
     # Проверка существования пользователя
     existing_user = db.query(User).filter(User.username == username).first()
     if existing_user:
+        question, new_answer = generate_captcha()
+        captcha_store[session_id] = new_answer
         return templates.TemplateResponse("register.html", {
             "request": request,
-            "error": "Пользователь уже существует"
+            "error": "Пользователь уже существует",
+            "captcha_question": question,
+            "session_id": session_id
         })
 
     # Хэшируем пароль
