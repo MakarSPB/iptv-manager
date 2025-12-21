@@ -5,19 +5,15 @@ from jose import jwt
 from datetime import datetime, timedelta
 import logging
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Создаем контекст для хэширования паролей
-# Используем argon2 как основную схему, bcrypt — резервная
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
     if not plain_password or not hashed_password:
         return False
     try:
-        # Argon2 не имеет жесткого ограничения в 72 байта, как bcrypt
         return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         logger.error(f"Ошибка проверки пароля: {e}")
@@ -27,11 +23,11 @@ def get_password_hash(password):
     if not password:
         return None
     try:
-        # Используем argon2 для хэширования
         return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Ошибка хэширования пароля: {e}")
         raise
+
 
 def authenticate_admin(username: str, password: str):
     return username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD

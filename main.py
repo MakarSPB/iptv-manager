@@ -15,7 +15,7 @@ from models import Channel
 from utils.parser import parse_m3u
 from utils.generator import generate_m3u
 from database import SessionLocal, User, Playlist, get_db
-from auth import authenticate_admin, create_access_token, init_admin_user
+from auth import authenticate_admin, create_access_token, init_admin_user, get_password_hash, verify_password
 from utils.generate_id import generate_short_id
 
 # Создаем контекст для хэширования паролей
