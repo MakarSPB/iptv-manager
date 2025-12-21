@@ -3,26 +3,23 @@
 <head>
     <title>Профиль</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        nav { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; }
-        nav a { color: white; margin: 0 10px; text-decoration: none; }
-        .container { padding: 20px; }
-    </style>
 </head>
 <body>
 <nav>
     <div class="logo"><strong>IPTV Manager</strong></div>
     <div class="links">
         <a href="/">Главная</a>
-        <a href="/upload">Загрузить</a>
         <a href="/playlists">Мои плейлисты</a>
         <a href="/profile">Профиль</a>
+        {% if user.is_admin %}
+        <a href="/users">Пользователи</a>
+        {% endif %}
         <a href="/logout">Выход</a>
     </div>
 </nav>
 
 <div class="container">
-    <h1>👤 Профиль пользователя</h1>
+    <h2>👤 Профиль</h2>
     <p><strong>Логин:</strong> {{ user.username }}</p>
     <p><strong>Роль:</strong> {% if user.is_admin %}Администратор{% else %}Пользователь{% endif %}</p>
     <p><strong>Количество плейлистов:</strong> {{ total_playlists }}</p>

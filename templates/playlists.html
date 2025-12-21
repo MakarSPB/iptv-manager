@@ -3,95 +3,23 @@
 <head>
     <title>Мои плейлисты</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        nav {
-            background: #333;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        nav a {
-            color: white;
-            margin: 0 10px;
-            text-decoration: none;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        .container {
-            padding: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f8f9fa;
-        }
-        .btn {
-            padding: 6px 12px;
-            margin: 2px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-        .btn-edit {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-edit:hover {
-            background-color: #0056b3;
-        }
-        .btn-download {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-download:hover {
-            background-color: #1e7e34;
-        }
-        .btn-delete {
-            background-color: #dc3545;
-            color: white;
-        }
-        .btn-delete:hover {
-            background-color: #c82333;
-        }
-        .actions {
-            display: flex;
-            gap: 8px;
-        }
-        .empty {
-            color: #6c757d;
-            font-style: italic;
-        }
-    </style>
 </head>
 <body>
 <nav>
     <div class="logo"><strong>IPTV Manager</strong></div>
     <div class="links">
         <a href="/">Главная</a>
-        <a href="/upload">Загрузить</a>
         <a href="/playlists">Мои плейлисты</a>
         <a href="/profile">Профиль</a>
+        {% if user.is_admin %}
+        <a href="/users">Пользователи</a>
+        {% endif %}
         <a href="/logout">Выход</a>
     </div>
 </nav>
 
 <div class="container">
-    <h1>📁 Мои плейлисты</h1>
+    <h2>📁 Мои плейлисты</h2>
 
     {% if playlists %}
     <table>

@@ -1,5 +1,312 @@
-body { font-family: sans-serif; padding: 20px; }
-table { width: 100%; border-collapse: collapse; }
-td, th { padding: 8px; text-align: left; }
-input { width: 100%; padding: 4px; }
-button { padding: 8px 12px; margin: 5px; }
+/* Общие стили для всех страниц */
+
+/* Сброс */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Навигация */
+nav {
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+nav .logo {
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+nav .links {
+    display: flex;
+    gap: 15px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+nav a:hover {
+    background: #555;
+    text-decoration: underline;
+}
+
+/* Основной контейнер */
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Заголовки */
+h1, h2, h3 {
+    color: #333;
+    margin: 20px 0 10px;
+}
+
+/* Таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Кнопки */
+.btn {
+    padding: 6px 12px;
+    margin: 2px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+.btn-edit {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #0056b3;
+}
+
+.btn-download {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-download:hover {
+    background-color: #1e7e34;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-admin {
+    background-color: #6f42c1;
+    color: white;
+}
+
+.btn-admin:hover {
+    background-color: #5a32a3;
+}
+
+/* Формы */
+.form-group {
+    margin: 15px 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Чекбоксы */
+input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Разделитель */
+hr {
+    border: 1px solid #eee;
+    margin: 30px 0;
+}
+
+/* Пустые состояния */
+.empty {
+    color: #6c757d;
+    font-style: italic;
+    margin: 20px 0;
+}
+
+/* Действия */
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #28a745;
+}
+
+.modal-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin-top: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Админ-только */
+.admin-only {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+/* Перемещение каналов */
+.move-controls {
+    display: flex;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.btn-move {
+    background-color: #6c757d;
+    color: white;
+    padding: 4px 6px;
+    font-size: 12px;
+    margin: 0 1px;
+}
+
+.btn-move:hover {
+    background-color: #5a6268;
+}
+
+/* Ввод канала */
+.channel-input {
+    width: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+/* Текстовые области */
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+/* Кнопка загрузки */
+#file {
+    margin: 10px 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .container {
+        padding: 15px;
+    }
+    .actions {
+        flex-wrap: wrap;
+    }
+}
