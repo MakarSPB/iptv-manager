@@ -119,6 +119,28 @@ document.querySelectorAll('tr').forEach(row => {
         }
     }
 });
+
+async function editPlaylist(id) {
+    try {
+        const response = await fetch(`/playlists/${id}/edit`);
+        if (!response.ok) {
+            throw new Error('Не удалось загрузить плейлист');
+        }
+        const data = await response.json();
+
+        // Отправляем данные в основную страницу (index)
+        window.parent.postMessage({
+            action: 'loadPlaylist',
+            data: data,
+            playlistId: id
+        }, '*');
+
+        // Плавно скроллим к редактору
+        document.getElementById('editor').scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+}
 </script>
 <footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
     &copy; 2025
