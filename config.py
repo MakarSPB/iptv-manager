@@ -1,17 +1,24 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field
+import os
+from dotenv import load_dotenv
 
+# Загружаем переменные из .env
+load_dotenv()
 
-class Settings(BaseSettings):
-    app_host: str = Field("127.0.0.1", env="APP_HOST")
-    app_port: int = Field(8000, env="APP_PORT")
-    playlists_dir: str = Field("storage/playlists", env="PLAYLISTS_DIR")
-    debug: bool = Field(False, env="DEBUG")
-    secret_key: str = Field(..., env="SECRET_KEY")
-    admin_username: str = Field(..., env="ADMIN_USERNAME")
-    admin_password: str = Field(..., env="ADMIN_PASSWORD")
-    class Config:
-        env_file = ".env"
+class Settings:
+    # Основные настройки
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
+    APP_PORT: int = int(os.getenv("APP_PORT", 8000))
 
+    # Безопасность
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-jwt-key-change-in-production")
+
+    # Пути
+    PLAYLISTS_DIR: str = os.getenv("PLAYLISTS_DIR", "uploads")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./data/users.db")
+
+    # Администратор по умолчанию
+    ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin")
 
 settings = Settings()

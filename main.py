@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import timedelta
 from jose import jwt
-import pwd_context
+from passlib.context import CryptContext  # Исправлено: импорт pwd_context
 
 from config import settings
 from models import Channel
@@ -18,15 +18,18 @@ from database import SessionLocal, User, Playlist
 from auth import authenticate_admin, create_access_token, get_db, init_admin_user
 from utils.generate_id import generate_short_id
 
+# Создаем контекст для хэширования паролей
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI(title="IPTV Playlist Manager")
 
-# Инициализация
+# Инициализация при старте
 init_admin_user()
 
-# Папки
+# Создаем необходимые директории
 os.makedirs(settings.playlists_dir, exist_ok=True)
 
-# Шаблоны
+# Настройка шаблонов и статики
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -40,7 +43,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         username: str = payload.get("sub")
         user = db.query(User).filter(User.username == username).first()
         return user
-    except:
+    except Exception:
         return None
 
 # === Страницы ===
@@ -58,6 +61,7 @@ async def login(
         password: str = Form(...),
         db: Session = Depends(get_db)
 ):
+    # Проверяем администратора
     if authenticate_admin(username, password):
         user = db.query(User).filter(User.username == username).first()
         if not user:
@@ -65,6 +69,7 @@ async def login(
             db.add(user)
             db.commit()
     else:
+        # Проверяем обычного пользователя
         user = db.query(User).filter(User.username == username).first()
         if not user or not pwd_context.verify(password, user.password):
             return templates.TemplateResponse(
