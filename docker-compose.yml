@@ -10,6 +10,8 @@ services:
       - ./uploads:/app/uploads
       - ./static:/app/static
       - ./templates:/app/templates
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app
       - DEBUG=${DEBUG:-False}
@@ -19,6 +21,4 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - PLAYLISTS_DIR=${PLAYLISTS_DIR:-uploads}
-    env_file:
-      - .env
     restart: unless-stopped
