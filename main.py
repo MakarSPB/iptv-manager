@@ -3,6 +3,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request, Dep
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import os
 import uuid
@@ -86,6 +87,53 @@ async def login(
 async def logout():
     resp = RedirectResponse("/login")
     resp.delete_cookie("access_token")
+    return resp
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.post("/register")
+async def register_user(
+        request: Request,
+        username: str = Form(...),
+        password: str = Form(...),
+        email: str = Form(...),
+        captcha: str = Form(...),
+        db: Session = Depends(get_db)
+):
+    # Простая проверка капчи (для примера)
+    if captcha.lower() != "abc123":
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": "Неверная капча"
+        })
+
+    # Проверка существования пользователя
+    existing_user = db.query(User).filter(User.username == username).first()
+    if existing_user:
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": "Пользователь уже существует"
+        })
+
+    # Хэшируем пароль
+    hashed_password = get_password_hash(password)
+
+    # Создаём пользователя
+    new_user = User(
+        username=username,
+        password=hashed_password,
+        email=email,
+        is_admin=0
+    )
+    db.add(new_user)
+    db.commit()
+
+    # Автоматически логиним
+    token = create_access_token(data={"sub": username})
+    resp = RedirectResponse("/", status_code=303)
+    resp.set_cookie(key="access_token", value=token, httponly=True)
     return resp
 
 @app.get("/", response_class=HTMLResponse)
