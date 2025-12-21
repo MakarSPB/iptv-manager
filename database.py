@@ -20,6 +20,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    email = Column(String, nullable=True)  # Новое поле: email
     is_admin = Column(Integer, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -36,7 +37,7 @@ class Playlist(Base):
     content = Column(Text)
     owner_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    is_shared = Column(Boolean, default=False)  # Новое поле: общий доступ
+    is_shared = Column(Boolean, default=False)  # Поле: общий доступ
 
     # Связь с пользователем
     owner = relationship("User", back_populates="playlists")
