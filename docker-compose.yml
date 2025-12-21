@@ -21,7 +21,6 @@ services:
       - db
 
   db:
-    image: sqlite3
     image: nouchka/sqlite3:latest
     volumes:
       - ./data/db.sqlite3:/tmp/db.sqlite3
