@@ -421,6 +421,19 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Пользователь удалён"}
 
+@app.post("/users/{user_id}/admin")
+async def toggle_admin_status(user_id: int, data: dict, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    # Нельзя менять статус самого себя
+    if user.is_admin and data.get("is_admin") is False:
+        # Здесь можно добавить проверку текущего пользователя, но для простоты запрещаем
+        raise HTTPException(status_code=400, detail="Нельзя лишить себя прав администратора")
+    user.is_admin = data.get("is_admin", False)
+    db.commit()
+    return {"message": "Статус администратора обновлён"}
+
 @app.get("/shared", response_class=HTMLResponse)
 async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)

@@ -52,7 +52,7 @@
             <th>ID</th>
             <th>Имя</th>
             <th>Email</th>
-            <th>Тип</th>
+            <th>Админ</th>
             <th>Действия</th>
         </tr>
         </thead>
@@ -63,11 +63,10 @@
             <td>{{ u.username }}</td>
             <td>{{ u.email or "— "}}</td>
             <td>
-                {% if u.is_admin %}
-                <span class="btn btn-admin">Администратор</span>
-                {% else %}
-                Пользователь
-                {% endif %}
+                <label class="admin-toggle">
+                    <input type="checkbox" {% if u.is_admin %}checked{% endif %} onchange="toggleAdmin({{ u.id }}, this.checked)">
+                    <span class="slider"></span>
+                </label>
             </td>
             <td>
                 {% if not u.is_admin %}
@@ -95,6 +94,27 @@
 </div>
 
 <script>
+    async function toggleAdmin(userId, isAdmin) {
+        try {
+            const res = await fetch(`/users/${userId}/admin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({is_admin: isAdmin})
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                alert('Ошибка: ' + data.detail);
+                // Возвращаем чекбокс в предыдущее состояние
+                event.target.checked = !isAdmin;
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+            event.target.checked = !isAdmin;
+        }
+    }
+
     function validateForm() {
         const username = document.querySelector("input[name='username']").value;
         if (username.includes(' ')) {
