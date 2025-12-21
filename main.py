@@ -290,7 +290,7 @@ async def users_page(request: Request, db: Session = Depends(get_db)):
         }
     )
 
-@app.post("/users", response_class=JSONResponse)
+@app.post("/users", response_class=HTMLResponse)
 async def create_user(
         username: str = Form(...),
         password: str = Form(...),
@@ -309,7 +309,9 @@ async def create_user(
     )
     db.add(new_user)
     db.commit()
-    return {"message": "Пользователь создан", "id": new_user.id}
+
+    # Перенаправляем с параметром, чтобы показать модальное окно
+    return RedirectResponse("/users?created=true", status_code=303)
 
 @app.delete("/users/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
