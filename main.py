@@ -410,6 +410,39 @@ async def create_user(
 
     return RedirectResponse("/users?created=true", status_code=303)
 
+@app.get("/users/{user_id}/edit")
+async def get_user_for_edit(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return user
+
+@app.post("/users/{user_id}/edit")
+async def update_user(
+        user_id: int,
+        username: str = Form(...),
+        password: str = Form(None),  # Может быть None, если поле пустое
+        email: str = Form(...),
+        db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    # Проверяем, не существует ли другой пользователь с таким именем
+    existing_user = db.query(User).filter(User.username == username, User.id != user_id).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Имя пользователя уже занято")
+
+    # Обновляем данные
+    user.username = username
+    user.email = email
+    if password:  # Если пароль указан, хэшируем и обновляем
+        user.password = get_password_hash(password)
+    
+    db.commit()
+    return {"message": "Пользователь успешно обновлён"}
+
 @app.delete("/users/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()

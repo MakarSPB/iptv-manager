@@ -44,6 +44,30 @@
 
     <hr>
 
+    <!-- Модальное окно для редактирования -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>✏️ Редактировать пользователя</h3>
+            <form id="editUserForm" onsubmit="return saveUserEdit(event)">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label>Имя пользователя:</label>
+                    <input type="text" id="editUsername" required minlength="3" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>Пароль (оставьте пустым, чтобы не менять):</label>
+                    <input type="password" id="editPassword" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Эл. почта:</label>
+                    <input type="email" id="editEmail" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Отмена</button>
+            </form>
+        </div>
+    </div>
+
     <h3>Существующие пользователи</h3>
     {% if users %}
     <table>
@@ -69,11 +93,14 @@
                 </label>
             </td>
             <td>
-                {% if not u.is_admin %}
-                <button class="btn btn-danger" onclick="deleteUser({{ u.id }})">Удалить</button>
-                {% else %}
-                <span class="admin-only">Нельзя удалить</span>
-                {% endif %}
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editUser({{ u.id }}, '{{ u.username }}', '{{ u.email }}')">Изменить</button>
+                    {% if not u.is_admin %}
+                    <button class="btn btn-danger" onclick="deleteUser({{ u.id }})">Удалить</button>
+                    {% else %}
+                    <span class="admin-only">Нельзя удалить</span>
+                    {% endif %}
+                </div>
             </td>
         </tr>
         {% endfor %}
@@ -94,6 +121,50 @@
 </div>
 
 <script>
+    async function editUser(userId, username, email) {
+        document.getElementById('editUserId').value = userId;
+        document.getElementById('editUsername').value = username;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function saveUserEdit(event) {
+        event.preventDefault();
+        
+        const userId = document.getElementById('editUserId').value;
+        const username = document.getElementById('editUsername').value;
+        const password = document.getElementById('editPassword').value;
+        const email = document.getElementById('editEmail').value;
+        
+        try {
+            const formData = new FormData();
+            formData.append('username', username);
+            if (password) formData.append('password', password);
+            formData.append('email', email);
+            
+            const res = await fetch(`/users/${userId}/edit`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (res.ok) {
+                location.reload();
+            } else {
+                const data = await res.json();
+                alert('Ошибка: ' + data.detail);
+            }
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+        
+        return false;
+    }
+
     async function toggleAdmin(userId, isAdmin) {
         try {
             const res = await fetch(`/users/${userId}/admin`, {
