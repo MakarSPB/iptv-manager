@@ -154,131 +154,131 @@ async def upload_playlist(
     if not file.filename.endswith((".m3u", ".m3u8")):
         raise HTTPException(status_code: 400, detail="Файл должен быть .m3u или .m3u8")
 
-        content = await file.read()
-        try:
-            channels = parse_m3u(content.decode("utf-8", errors="ignore"))
-        except Exception as e:
-            raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
+    content = await file.read()
+    try:
+        channels = parse_m3u(content.decode("utf-8", errors="ignore"))
+    except Exception as e:
+        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
 
-            return {"channels": channels}
+    return {"channels": channels}
 
-        @app.get("/playlists/{playlist_id}/edit")
-        async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-            playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
-            if not playlist:
-                raise HTTPException(status_code: 404, detail="Плейлист не найден")
+@app.get("/playlists/{playlist_id}/edit")
+async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
+    if not playlist:
+        raise HTTPException(status_code: 404, detail="Плейлист не найден")
 
-                try:
-                    channels = parse_m3u(playlist.content)
-                    return {
-                        "id": playlist.id,
-                        "name": playlist.name,
-                        "filename": playlist.filename,
-                        "channels": channels
-                    }
-                except Exception as e:
-                    raise HTTPException(status_code: 500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
+    try:
+        channels = parse_m3u(playlist.content)
+        return {
+            "id": playlist.id,
+            "name": playlist.name,
+            "filename": playlist.filename,
+            "channels": channels
+        }
+    except Exception as e:
+        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
 
-                @app.put("/playlists/{playlist_id}")
-                async def update_playlist(
-                        playlist_id: str,
-                        data: dict,
-                        db: Session = Depends(get_db),
-                        user: User = Depends(get_current_user)
-                ):
-                    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
-                    if not playlist:
-                        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+@app.put("/playlists/{playlist_id}")
+async def update_playlist(
+        playlist_id: str,
+        data: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
+    if not playlist:
+        raise HTTPException(status_code: 404, detail="Плейлист не найден")
 
-                        name = data.get("name", "Без названия")
-                        channels = data.get("channels", [])
+    name = data.get("name", "Без названия")
+    channels = data.get("channels", [])
 
-                        m3u_content = generate_m3u(channels)
+    m3u_content = generate_m3u(channels)
 
-                        playlist.name = name
-                        playlist.filename = f"{name}.m3u"
-                        playlist.content = m3u_content
-                        db.commit()
+    playlist.name = name
+    playlist.filename = f"{name}.m3u"
+    playlist.content = m3u_content
+    db.commit()
 
-                        return {"message": "Плейлист обновлён", "url": f"/playlists/{playlist_id}.m3u"}
+    return {"message": "Плейлист обновлён", "url": f"/playlists/{playlist_id}.m3u"}
 
-                    @app.delete("/playlists/{playlist_id}")
-                    async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-                        playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
-                        if not playlist:
-                            raise HTTPException(status_code: 404, detail="Плейлист не найден")
+@app.delete("/playlists/{playlist_id}")
+async def delete_playlist(playlist_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id, Playlist.owner_id == user.id).first()
+    if not playlist:
+        raise HTTPException(status_code: 404, detail="Плейлист не найден")
 
-                            db.delete(playlist)
-                            db.commit()
-                            return {"message": "Плейлист удалён"}
+    db.delete(playlist)
+    db.commit()
+    return {"message": "Плейлист удалён"}
 
-                        @app.post("/parse-text", response_class=JSONResponse)
-                        async def parse_text(data: dict):
-                            content = data.get("content", "")
-                            if not content.strip():
-                                raise HTTPException(status_code: 400, detail="Пустой контент")
-                                try:
-                                    channels = parse_m3u(content)
-                                    return {"channels": channels}
-                                except Exception as e:
-                                    raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
+@app.post("/parse-text", response_class=JSONResponse)
+async def parse_text(data: dict):
+    content = data.get("content", "")
+    if not content.strip():
+        raise HTTPException(status_code: 400, detail="Пустой контент")
+    try:
+        channels = parse_m3u(content)
+        return {"channels": channels}
+    except Exception as e:
+        raise HTTPException(status_code: 500, detail=f"Ошибка парсинга: {str(e)}")
 
-                                @app.post("/save", response_class=JSONResponse)
-                                async def save_playlist(
-                                        data: dict,
-                                        db: Session = Depends(get_db),
-                                        user: User = Depends(get_current_user)
-                                ):
-                                    name = data.get("name", "Без названия")
-                                    channels = data.get("channels", [])
+@app.post("/save", response_class=JSONResponse)
+async def save_playlist(
+        data: dict,
+        db: Session = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    name = data.get("name", "Без названия")
+    channels = data.get("channels", [])
 
-                                    playlist_id = generate_short_id(5)
-                                    while db.query(Playlist).filter(Playlist.id == playlist_id).first():
-                                        playlist_id = generate_short_id(5)
+    playlist_id = generate_short_id(5)
+    while db.query(Playlist).filter(Playlist.id == playlist_id).first():
+        playlist_id = generate_short_id(5)
 
-                                    m3u_content = generate_m3u(channels)
+    m3u_content = generate_m3u(channels)
 
-                                    playlist = Playlist(
-                                        id=playlist_id,
-                                        name=name,
-                                        filename=f"{name}.m3u",
-                                        content=m3u_content,
-                                        owner_id=user.id
-                                    )
-                                    db.add(playlist)
-                                    db.commit()
+    playlist = Playlist(
+        id=playlist_id,
+        name=name,
+        filename=f"{name}.m3u",
+        content=m3u_content,
+        owner_id=user.id
+    )
+    db.add(playlist)
+    db.commit()
 
-                                    url = f"/playlists/{playlist_id}.m3u"
-                                    return {"message": "Сохранено", "url": url}
+    url = f"/playlists/{playlist_id}.m3u"
+    return {"message": "Сохранено", "url": url}
 
-                                @app.get("/new", response_class=HTMLResponse)
-                                async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
-                                    user = get_current_user(request, db)
-                                    if not user:
-                                        return RedirectResponse("/login")
+@app.get("/new", response_class=HTMLResponse)
+async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
 
-                                    return templates.TemplateResponse(
-                                        "edit.html",
-                                        {
-                                            "request": request,
-                                            "user": user,
-                                            "playlist": None,
-                                            "channels": []
-                                        }
-                                    )
+    return templates.TemplateResponse(
+        "edit.html",
+        {
+            "request": request,
+            "user": user,
+            "playlist": None,
+            "channels": []
+        }
+    )
 
-                                @app.get("/playlists/{playlist_id}.m3u")
-                                async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
-                                    playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
-                                    if not playlist:
-                                        raise HTTPException(status_code: 404, detail="Плейлист не найден")
-                                        return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
+@app.get("/playlists/{playlist_id}.m3u")
+async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
+    playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
+    if not playlist:
+        raise HTTPException(status_code: 404, detail="Плейлист не найден")
+    return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
-                                    if __name__ == "__main__":
-                                        uvicorn.run(
-                                            "main:app",
-                                            host=settings.APP_HOST,
-                                            port=settings.APP_PORT,
-                                            reload=settings.DEBUG,
-                                            log_level="info"
-                                        )
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
+        reload=settings.DEBUG,
+        log_level="info"
+    )
