@@ -248,7 +248,7 @@ async def save_playlist(
     db.add(playlist)
     db.commit()
 
-    url = f"/playlists/{playlist_id}.m3u"
+    url = f"/{playlist_id}.m3u"  # Изменили: теперь без /playlists/
     return {"message": "Сохранено", "url": url}
 
 @app.get("/new", response_class=HTMLResponse)
@@ -267,8 +267,8 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
         }
     )
 
-@app.get("/playlists/{playlist_id}.m3u")
-async def serve_playlist(playlist_id: str, db: Session = Depends(get_db)):
+@app.get("/{playlist_id}.m3u")
+async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
         raise HTTPException(status_code=404, detail="Плейлист не найден")
