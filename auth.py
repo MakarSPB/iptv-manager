@@ -16,7 +16,7 @@ def verify_password(plain_password, hashed_password):
     if not plain_password or not hashed_password:
         return False
     try:
-        # Усекаем пароль до 72 байт, как требует bcrypt
+        # Принудительно усекаем пароль до 72 символов (bcrypt limit)
         plain_password = plain_password[:72]
         return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
@@ -27,7 +27,7 @@ def get_password_hash(password):
     if not password:
         return None
     try:
-        # Усекаем пароль до 72 байт перед хэшированием
+        # Принудительно усекаем пароль до 72 символов перед хэшированием
         password = password[:72]
         return pwd_context.hash(password)
     except Exception as e:
@@ -52,9 +52,12 @@ def init_admin_user():
     try:
         user = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
         if not user:
-            # Усекаем пароль админа до 72 символов
+            # Усекаем пароль администратора до 72 символов
             admin_password = settings.ADMIN_PASSWORD[:72]
             hashed_password = get_password_hash(admin_password)
+            if not hashed_password:
+                logger.error("Не удалось хэшировать пароль администратора")
+                return
             admin_user = User(
                 username=settings.ADMIN_USERNAME,
                 password=hashed_password,
@@ -62,9 +65,9 @@ def init_admin_user():
             )
             db.add(admin_user)
             db.commit()
-            logger.info(f"Администратор {settings.ADMIN_USERNAME} создан")
+            logger.info(f"Администратор {settings.ADMIN_USERNAME} успешно создан")
     except Exception as e:
-        logger.error(f"Ошибка создания администратора: {e}")
+        logger.error(f"Ошибка при инициализации администратора: {e}")
         raise
     finally:
         db.close()
