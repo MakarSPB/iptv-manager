@@ -3,15 +3,36 @@ from database import SessionLocal, User
 from config import settings
 from jose import jwt
 from datetime import datetime, timedelta
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Создаем контекст для хэширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        # Усекаем пароль до 72 байт, как требует bcrypt
+        plain_password = plain_password[:72]
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Ошибка проверки пароля: {e}")
+        return False
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    if not password:
+        return None
+    try:
+        # Усекаем пароль до 72 байт перед хэшированием
+        password = password[:72]
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error(f"Ошибка хэширования пароля: {e}")
+        raise
 
 def authenticate_admin(username: str, password: str):
     return username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD
@@ -31,7 +52,9 @@ def init_admin_user():
     try:
         user = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
         if not user:
-            hashed_password = get_password_hash(settings.ADMIN_PASSWORD)
+            # Усекаем пароль админа до 72 символов
+            admin_password = settings.ADMIN_PASSWORD[:72]
+            hashed_password = get_password_hash(admin_password)
             admin_user = User(
                 username=settings.ADMIN_USERNAME,
                 password=hashed_password,
@@ -39,13 +62,9 @@ def init_admin_user():
             )
             db.add(admin_user)
             db.commit()
-    finally:
-        db.close()
-
-# Функция для получения сессии базы данных
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
+            logger.info(f"Администратор {settings.ADMIN_USERNAME} создан")
+    except Exception as e:
+        logger.error(f"Ошибка создания администратора: {e}")
+        raise
     finally:
         db.close()
