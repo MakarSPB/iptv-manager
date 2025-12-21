@@ -2,21 +2,128 @@
 <html>
 <head>
     <title>Вход</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        input, button { padding: 10px; margin: 10px; font-size: 16px; width: 300px; }
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #333;
+            font-size: 24px;
+            margin: 0;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-<h2>🔐 Войдите в систему</h2>
-<form action="/login" method="post">
-    <input type="text" name="username" placeholder="Логин" required>
-    <input type="password" name="password" placeholder="Пароль" required>
-    <button type="submit">Войти</button>
-</form>
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
+<nav>
+    <div class="logo"><strong>IPTV Manager</strong></div>
+    <div class="links">
+        <a href="/login">Вход</a>
+        <a href="/register">Регистрация</a>
+    </div>
+</nav>
+
+<div class="login-container">
+    <div class="logo">
+        <h1>🔐 Вход в систему</h1>
+    </div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form action="/login" method="post">
+        <div class="form-group">
+            <label for="username">Логин</label>
+            <input type="text" id="username" name="username" placeholder="Введите логин" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" placeholder="Введите пароль" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Войти</button>
+    </form>
+
+    <div class="links">
+        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+    </div>
+</div>
+
 <footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
     &copy; 2025
     <a href="https://github.com/Makar-aka" target="_blank" style="color: #007bff; text-decoration: none;">
