@@ -14,7 +14,7 @@ services:
       - .env
     environment:
       - PYTHONPATH=/app
-      - DEBUG=${DEBUG:-False}
+      - DEBUG=${DEBUG:-True}
       - APP_HOST=${APP_HOST:-0.0.0.0}
       - APP_PORT=${APP_PORT:-8000}
       - SECRET_KEY=${SECRET_KEY}
