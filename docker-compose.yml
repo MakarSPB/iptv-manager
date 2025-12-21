@@ -22,9 +22,9 @@ services:
 
   # Сервис db не нужен — мы используем SQLite в ./data/
   # Но оставим контейнер для отладки или резервного копирования
-  sqlite-browser:
-    image: nouchka/sqlite3:latest
-    volumes:
-      - ./data:/data
-    command: sleep infinity
-    restart: unless-stopped
+  #sqlite-browser:
+  #  image: nouchka/sqlite3:latest
+  #  volumes:
+  #    - ./data:/data
+  #  command: sleep infinity
+  #  restart: unless-stopped
