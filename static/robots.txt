@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Disallow crawling of admin pages that don't need indexing
+Disallow: /login
+Disallow: /register
+Disallow: /admin
+Disallow: /users
+
+# Disallow crawling of playlist files
+Disallow: /*.m3u
+
+# Sitemap
+Sitemap: /sitemap.xml
