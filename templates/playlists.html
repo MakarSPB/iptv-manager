@@ -59,7 +59,9 @@
     <p class="empty">У вас пока нет ни одного плейлиста. Загрузите первый!</p>
     {% endif %}
 </div>
-<div id="editor" style="display:none; margin-top:20px;">
+
+<!-- Редактор плейлистов -->
+<div id="editor" style="display:none; margin-top:20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
     <h3>Редактирование: <span id="playlist-name">Новый плейлист</span></h3>
 
     <!-- Кнопка "Добавить канал" -->
@@ -83,11 +85,18 @@
             <th>Удалить</th>
         </tr>
     </table>
-    <input type="text" id="save-name" placeholder="Название плейлиста">
+    <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
     <button class="btn btn-edit" onclick="save()">Сохранить</button>
     <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
     <p id="result-url"></p>
 </div>
+
+<footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
+    &copy; 2025
+    <a href="https://github.com/Makar-aka" target="_blank" style="color: #007bff; text-decoration: none;">
+        MakarSPB
+    </a>
+</footer>
 
 <script>
     // === Переменные для редактора ===
@@ -239,14 +248,14 @@
         }
 
         const m3uContent = `#EXTM3U\n${channels.map(ch => {
-            const tvg = ch.tvg_name ? ` tvg-name="${escapeHtml(ch.tvg_name)}"` : '';
-            const logo = ch.logo ? ` tvg-logo="${escapeHtml(ch.logo)}"` : '';
-            const group = ch.group_title ? ` group-title="${escapeHtml(ch.group_title)}"` : '';
-            return `#EXTINF:-1${tvg}${logo}${group},${escapeHtml(ch.name)}\n${escapeHtml(ch.url)}`;
+            const tvg = ch.tvg_name ? \` tvg-name="\${escapeHtml(ch.tvg_name)}"\` : '';
+            const logo = ch.logo ? \` tvg-logo="\${escapeHtml(ch.logo)}"\` : '';
+            const group = ch.group_title ? \` group-title="\${escapeHtml(ch.group_title)}"\` : '';
+            return \`#EXTINF:-1\${tvg}\${logo}\${group},\${escapeHtml(ch.name)}\n\${escapeHtml(ch.url)}\`;
         }).join('\n')}`;
 
         try {
-            const response = await fetch(`/playlists/${currentPlaylistId}`, {
+            const response = await fetch(\`/playlists/\${currentPlaylistId}\`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, channels })
@@ -254,12 +263,12 @@
 
             if (response.ok) {
                 const data = await response.json();
-                document.getElementById('result-url').innerHTML = `
-                    Сохранено! <a href="${data.url}" target="_blank">Открыть</a> |
-                    <a href="${data.url}" download="${name}.m3u">Скачать</a>
-                `;
-                // Обновляем таблицу
-                location.reload();
+                document.getElementById('result-url').innerHTML = \`
+                    Сохранено! <a href="\${data.url}" target="_blank">Открыть</a> |
+                    <a href="\${data.url}" download="\${name}.m3u">Скачать</a>
+                \`;
+                // Обновляем страницу
+                setTimeout(() => location.reload(), 1000);
             } else {
                 const data = await response.json();
                 alert('Ошибка: ' + data.detail);
@@ -268,47 +277,20 @@
             alert('Ошибка: ' + err.message);
         }
     }
-</script>
-<script>
-    // Обработчик чекбокса "Общак"
-    document.querySelectorAll('.share-toggle').forEach(checkbox => {
-        checkbox.addEventListener('change', async function() {
-            const playlistId = this.dataset.id;
-            const isShared = this.checked;
 
-            try {
-                const response = await fetch(`/playlists/${playlistId}/share`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ is_shared: isShared })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка при обновлении статуса');
-                }
-            } catch (err) {
-                alert('Не удалось обновить статус общего доступа');
-                this.checked = !isShared;
-            }
-        });
-    });
-
-    // Функция редактирования плейлиста — открывает редактор на текущей странице
+    // === Редактирование плейлиста ===
     async function editPlaylist(id) {
         try {
-            const response = await fetch(`/playlists/${id}/edit`);
+            const response = await fetch(\`/playlists/\${id}/edit\`);
             if (!response.ok) {
                 throw new Error('Не удалось загрузить плейлист');
             }
             const data = await response.json();
 
-            // Сохраняем ID плейлиста для последующего сохранения
+            // Настройка редактора
             currentPlaylistId = id;
+            document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
             document.getElementById('save-name').value = data.name || 'Без названия';
-
-            // Отрисовываем каналы в таблице редактора
             channels = data.channels;
             renderChannels();
 
@@ -321,12 +303,29 @@
             alert('Ошибка: ' + err.message);
         }
     }
+
+    // === Обновление статуса "Общак" ===
+    document.querySelectorAll('.share-toggle').forEach(checkbox => {
+        checkbox.addEventListener('change', async function() {
+            const playlistId = this.dataset.id;
+            const isShared = this.checked;
+
+            try {
+                const response = await fetch(\`/playlists/\${playlistId}/share\`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_shared: isShared })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при обновлении статуса');
+                }
+            } catch (err) {
+                alert('Не удалось обновить статус общего доступа');
+                this.checked = !isShared;
+            }
+        });
+    });
 </script>
-<footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
-    &copy; 2025
-    <a href="https://github.com/Makar-aka" target="_blank" style="color: #007bff; text-decoration: none;">
-        MakarSPB
-    </a>
-</footer>
 </body>
 </html>
