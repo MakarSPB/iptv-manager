@@ -48,6 +48,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
+ 
 # Создаем таблицы при запуске
 Base.metadata.create_all(bind=engine)
