@@ -1,9 +1,9 @@
-fastapi[all]
+fastapi
 uvicorn
+sqlalchemy
 jinja2
-pydantic-settings
-SQLAlchemy
+python-multipart
 passlib[argon2]
 python-jose[cryptography]
-python-multipart
+python-dotenv
 argon2-cffi

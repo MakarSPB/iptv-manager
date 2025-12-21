@@ -11,20 +11,14 @@ services:
       - ./static:/app/static
       - ./templates:/app/templates
     environment:
-      - PYTHONPATH=${PYTHONPATH:-/app}
+      - PYTHONPATH=/app
       - DEBUG=${DEBUG:-False}
       - APP_HOST=${APP_HOST:-0.0.0.0}
       - APP_PORT=${APP_PORT:-8000}
       - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - PLAYLISTS_DIR=${PLAYLISTS_DIR:-uploads}
     env_file:
       - .env
     restart: unless-stopped
-
-  # Сервис db не нужен — мы используем SQLite в ./data/
-  # Но оставим контейнер для отладки или резервного копирования
-  #sqlite-browser:
-  #  image: nouchka/sqlite3:latest
-  #  volumes:
-  #    - ./data:/data
-  #  command: sleep infinity
-  #  restart: unless-stopped
