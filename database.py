@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -21,8 +21,8 @@ class User(Base):
     is_admin = Column(Integer, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Связь с плейлистами
-    playlists = relationship("Playlist", back_populates="owner")
+    # Связь с плейлистами (обратная сторона)
+    playlists = relationship("Playlist", back_populates="owner", foreign_keys="[Playlist.owner_id]")
 
 # Модель плейлиста
 class Playlist(Base):
@@ -32,10 +32,10 @@ class Playlist(Base):
     name = Column(String, index=True)
     filename = Column(String)
     content = Column(Text)
-    owner_id = Column(Integer, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), index=True)  # Добавлен внешний ключ
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Связь с пользователем
+    # Связь с пользователем (главная сторона)
     owner = relationship("User", back_populates="playlists")
 
 # Создаем фабрику сессий
