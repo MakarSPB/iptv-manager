@@ -132,7 +132,7 @@
             <td>{{ pl.filename }}</td>
             <td class="actions">
                 <button class="btn btn-edit" onclick="editPlaylist('{{ pl.id }}')">Редактировать</button>
-                <a class="btn btn-download" href="/playlists/{{ pl.id }}.m3u" download>Скачать</a>
+                <a class="btn btn-download" href="/{{ pl.id }}.m3u" download>Скачать</a>
                 <button class="btn btn-delete" onclick="deletePlaylist('{{ pl.id }}')">Удалить</button>
             </td>
         </tr>
