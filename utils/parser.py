@@ -8,7 +8,7 @@ def parse_m3u(content: str) -> list[Channel]:
     # Ищем url-tvg в первой строке
     lines = [line.strip() for line in content.splitlines() if line.strip()]
     if lines and lines[0].startswith('#EXTM3U'):
-        match = re.search(r'url-tvg=["']([^"']+)["']', lines[0])
+        match = re.search(r'url-tvg="([^"]+)"', lines[0])
         if match:
             tvg_url = match.group(1)
 
