@@ -441,8 +441,19 @@ async def catch_all(request: Request, path: str):
 @app.get("/users", response_class=HTMLResponse)
 async def users_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
-    if not user or not user.is_admin:
-        raise HTTPException(status_code=403, detail="Доступ запрещён")
+    if not user:
+        return RedirectResponse("/login")
+    if not user.is_admin:
+        return templates.TemplateResponse(
+            "error.html", 
+            {
+                "request": request,
+                "status_code": "403",
+                "title": "Доступ запрещён",
+                "message": "У вас нет прав для доступа к этой странице. Эта область защищена и доступна только администраторам."
+            }, 
+            status_code=403
+        )
 
     users = db.query(User).all()
     return templates.TemplateResponse(
