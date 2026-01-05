@@ -415,39 +415,7 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
         }
     )
 
-@app.get("/{path:path}")
-async def catch_all(request: Request, path: str):
-    # Список защищенных префиксов
-    protected_prefixes = ["admin", "api", "users", "profile", "playlists"]
-    
-    # Получаем текущего пользователя
-    user = get_current_user(request)
-    
-    # Проверяем, начинается ли путь с одного из защищенных префиксов
-    if any(path.startswith(prefix) for prefix in protected_prefixes):
-        return templates.TemplateResponse(
-            "error.html", 
-            {
-                "request": request,
-                "status_code": "403",
-                "title": "Доступ запрещён",
-                "message": "У вас нет прав для доступа к этой странице. Эта область защищена и доступна только авторизованным пользователям.",
-                "user": user
-            }, 
-            status_code=403
-        )
-    # Для всех остальных несуществующих путей - 404
-    return templates.TemplateResponse(
-        "error.html", 
-        {
-            "request": request,
-            "status_code": "404",
-            "title": "Страница не найдена",
-            "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
-            "user": user
-        }, 
-        status_code=404
-    )
+
 
 @app.get("/users", response_class=HTMLResponse)
 async def users_page(request: Request, db: Session = Depends(get_db)):
