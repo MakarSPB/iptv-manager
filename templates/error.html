@@ -6,17 +6,34 @@
     <link rel="stylesheet" href="/static/style.css">
     <style>
         .error-container {
-            text-align: center;
             padding: 50px 20px;
             margin: 50px auto;
-            max-width: 800px;
+            max-width: 1000px;
             font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        
+        .error-content {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+        }
+        
+        .error-image-container {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .error-image {
             max-width: 100%;
             height: auto;
-            margin: 20px 0;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
@@ -24,18 +41,19 @@
         .error-title {
             color: {{ "#dc3545" if status_code.startswith('4') else "#ffc107" if status_code.startswith('5') else "#007bff" }};
             font-size: 3rem;
-            margin: 20px 0;
+            margin: 10px 0;
+            line-height: 1.2;
         }
         
         .error-message {
             color: #6c757d;
             font-size: 1.2rem;
-            margin: 20px 0;
+            margin: 15px 0;
             line-height: 1.6;
         }
         
         .error-actions {
-            margin: 30px 0;
+            margin: 20px 0;
         }
         
         .btn-home {
@@ -47,6 +65,7 @@
             border-radius: 5px;
             font-size: 1.1rem;
             transition: background-color 0.3s;
+            margin-right: 15px;
         }
         
         .btn-home:hover {
@@ -55,7 +74,6 @@
         
         .back-link {
             display: inline-block;
-            margin-top: 15px;
             color: #007bff;
             text-decoration: none;
         }
@@ -78,18 +96,22 @@
 
     <div class="container">
         <div class="error-container">
-            <h1 class="error-title">{{ status_code }}</h1>
-            <h2>{{ title }}</h2>
-            <p class="error-message">
-                {{ message }}
-            </p>
-            
-            <div class="error-actions">
-                <a href="/" class="btn-home">Вернуться на главную</a>
-                <p class="back-link" onclick="history.back()">← Вернуться назад</p>
+            <div class="error-content">
+                <h1 class="error-title">{{ status_code }}</h1>
+                <h2>{{ title }}</h2>
+                <p class="error-message">
+                    {{ message }}
+                </p>
+                
+                <div class="error-actions">
+                    <a href="/" class="btn-home">Вернуться на главную</a>
+                    <p class="back-link" onclick="history.back()">← Вернуться назад</p>
+                </div>
             </div>
             
-            <img src="/static/404.png" alt="Ошибка" class="error-image">
+            <div class="error-image-container">
+                <img src="/static/404.png" alt="Ошибка" class="error-image">
+            </div>
         </div>
     </div>
 
