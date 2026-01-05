@@ -38,6 +38,7 @@ class Playlist(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     is_shared = Column(Boolean, default=False)  # Поле: общий доступ
+    tvg_url = Column(String, nullable=True, default="")  # Новое поле: URL TV-гид
 
     # Связь с пользователем
     owner = relationship("User", back_populates="playlists")

@@ -9,3 +9,4 @@ class Channel(BaseModel):
     tvg_logo: Optional[str] = None
     group_title: Optional[str] = None
     url: str
+    tvg_url: Optional[str] = None

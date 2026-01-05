@@ -259,7 +259,7 @@
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, channels: updatedChannels })
+                body: JSON.stringify({ name, channels: updatedChannels, tvg_url: tvgUrl })
             });
             const data = await res.json();
             document.getElementById('result-url').innerHTML =

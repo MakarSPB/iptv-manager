@@ -84,6 +84,7 @@
             </tr>
         </table>
         <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
+        <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 100%; padding: 8px; margin: 10px 0;">
         <button class="btn btn-edit" onclick="save()">Сохранить</button>
         <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
         <p id="result-url"></p>
@@ -93,6 +94,7 @@
 <script>
     let currentPlaylistId = null;
     let channels = [];
+    let tvgUrl = "";
 
     async function upload() {
         const input = document.getElementById('file');
@@ -252,6 +254,7 @@
 
     async function save() {
         const name = document.getElementById('save-name').value || 'Мой плейлист';
+        tvgUrl = document.getElementById('tvg-url').value;
         const table = document.getElementById('channel-table');
         const updatedChannels = [];
 
@@ -273,7 +276,7 @@
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, channels: updatedChannels })
+                body: JSON.stringify({ name, channels: updatedChannels, tvg_url: tvgUrl })
             });
 
             const data = await res.json();

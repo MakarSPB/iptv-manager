@@ -86,6 +86,7 @@
             </tr>
         </table>
         <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
+        <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 100%; padding: 8px; margin: 10px 0;">
         <button class="btn btn-edit" onclick="save()">Сохранить</button>
         <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
         <p id="result-url"></p>
@@ -96,6 +97,7 @@
     // === Переменные для редактора ===
     let currentPlaylistId = null;
     let channels = [];
+    let tvgUrl = "";
 
     // === Функции редактора ===
     function addNewChannel() {
@@ -237,6 +239,7 @@
 
     async function save() {
         const name = document.getElementById('save-name').value.trim() || 'Без названия';
+        tvgUrl = document.getElementById('tvg-url').value;
         if (channels.length === 0) {
             alert('Нет каналов для сохранения');
             return;
@@ -253,7 +256,7 @@
             const response = await fetch(`/playlists/${currentPlaylistId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, channels })
+                body: JSON.stringify({ name, channels, tvg_url: tvgUrl })
             });
 
             if (response.ok) {
