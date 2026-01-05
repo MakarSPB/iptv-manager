@@ -461,7 +461,8 @@ async def users_page(request: Request, db: Session = Depends(get_db)):
                 "request": request,
                 "status_code": "403",
                 "title": "Доступ запрещён",
-                "message": "У вас нет прав для доступа к этой странице. Эта область защищена и доступна только администраторам."
+                "message": "У вас нет прав для доступа к этой странице. Эта область защищена и доступна только администраторам.",
+                "user": user
             }, 
             status_code=403
         )
