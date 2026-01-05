@@ -99,6 +99,7 @@
 <div class="container">
     <h2>✏️ Редактирование плейлиста</h2>
     <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
+    <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
 
     <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
     <button class="btn btn-edit" onclick="importFromText()">📎 Импортировать из текста</button>
@@ -125,6 +126,7 @@
 <script>
     let channels = [];
     const currentPlaylistId = null;
+    let tvgUrl = "";
 
     function addNewChannel() {
         channels.push({
@@ -236,6 +238,7 @@
 
     async function save() {
         const name = document.getElementById('save-name').value || 'Новый плейлист';
+        tvgUrl = document.getElementById('tvg-url').value;
         const table = document.getElementById('channel-table');
         const inputs = table.querySelectorAll('input');
         const updatedChannels = [];

@@ -1,5 +1,7 @@
-def generate_m3u(channels) -> str:
+def generate_m3u(channels, tvg_url: str = None) -> str:
     lines = ["#EXTM3U"]
+    if tvg_url:
+        lines[0] += f' url-tvg="{tvg_url}"'
     for ch in channels:
         extinf = f'#EXTINF:-1'
         if ch.get("tvg_id"):

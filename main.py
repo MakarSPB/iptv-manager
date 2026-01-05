@@ -289,7 +289,7 @@ async def update_playlist(
     name = data.get("name", "Без названия")
     channels = data.get("channels", [])
 
-    m3u_content = generate_m3u(channels)
+    m3u_content = generate_m3u(channels, tvg_url=tvgUrl)
 
     playlist.name = name
     playlist.filename = f"{name}.m3u"
@@ -332,7 +332,7 @@ async def save_playlist(
     while db.query(Playlist).filter(Playlist.id == playlist_id).first():
         playlist_id = generate_short_id(5)
 
-    m3u_content = generate_m3u(channels)
+    m3u_content = generate_m3u(channels, tvg_url=tvgUrl)
 
     playlist = Playlist(
         id=playlist_id,
