@@ -372,14 +372,50 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 
+@app.get("/shared", response_class=HTMLResponse)
+async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login")
+
+    # Получаем все плейлисты, отмеченные как общие
+    shared_playlists = (
+        db.query(Playlist, User.username.label("owner_username"))
+        .join(User, Playlist.owner_id == User.id)
+        .filter(Playlist.is_shared == True)
+        .all()
+    )
+
+    # Добавляем количество каналов
+    playlists_with_info = []
+    for playlist, owner_username in shared_playlists:
+        try:
+            channels = parse_m3u(playlist.content)
+            channel_count = len(channels)
+        except:
+            channel_count = 0
+        playlists_with_info.append({
+            "playlist": playlist,
+            "owner_username": owner_username,
+            "channel_count": channel_count
+        })
+
+    return templates.TemplateResponse(
+        "shared.html",
+        {
+            "request": request,
+            "user": user,
+            "playlists": playlists_with_info
+        }
+    )
+
 @app.get("/{path:path}")
 async def catch_all(request: Request, path: str):
     # Список защищенных префиксов
     protected_prefixes = ["admin", "api", "users", "profile", "playlists"]
     
     # Проверяем, начинается ли путь с одного из защищенных префиксов
-    # и не является ли он просто "shared"
-    if any(path.startswith(prefix) for prefix in protected_prefixes) and path != "shared":
+    if any(path.startswith(prefix) for prefix in protected_prefixes):
         return templates.TemplateResponse(
             "error.html", 
             {
