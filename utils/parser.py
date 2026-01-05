@@ -2,7 +2,10 @@ import re
 from models import Channel
 
 
-def parse_m3u(content: str) -> list[Channel]:
+def parse_m3u(content: str) -> dict:
+    """
+    Parse M3U content and return dictionary with channels and tvg_url
+    """
     channels = []
     tvg_url = None
     # Ищем url-tvg в первой строке
@@ -54,4 +57,7 @@ def parse_m3u(content: str) -> list[Channel]:
             )
         i += 1
 
-    return channels
+    return {
+        "channels": channels,
+        "tvg_url": tvg_url
+    }

@@ -278,6 +278,10 @@
             const data = event.data.data;
             currentPlaylistId = event.data.playlistId;
             channels = data.channels;
+            if (data.tvg_url) {
+                tvgUrl = data.tvg_url;
+                document.getElementById('tvg-url').value = data.tvg_url;
+            }
             document.getElementById('save-name').value = data.name || 'Без названия';
             renderChannels();
         }

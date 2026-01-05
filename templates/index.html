@@ -126,6 +126,10 @@
 
             currentPlaylistId = id;
             channels = data.channels;
+            if (data.tvg_url) {
+                tvgUrl = data.tvg_url;
+                document.getElementById('tvg-url').value = data.tvg_url;
+            }
             document.getElementById('playlist-name').textContent = data.name || 'Редактирование';
             document.getElementById('save-name').value = data.name || 'Без названия';
             renderChannels();

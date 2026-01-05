@@ -318,6 +318,10 @@
 
             // Отрисовываем каналы в таблице редактора
             channels = data.channels;
+            if (data.tvg_url) {
+                tvgUrl = data.tvg_url;
+                document.getElementById('tvg-url').value = data.tvg_url;
+            }
             renderChannels();
 
             // Показываем редактор

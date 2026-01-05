@@ -265,12 +265,13 @@ async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: U
         raise HTTPException(status_code=404, detail="Плейлист не найден")
 
     try:
-        channels = parse_m3u(playlist.content)
+        result = parse_m3u(playlist.content)
         return {
             "id": playlist.id,
             "name": playlist.name,
             "filename": playlist.filename,
-            "channels": channels
+            "channels": result['channels'],
+            "tvg_url": result['tvg_url']
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
