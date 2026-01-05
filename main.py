@@ -371,6 +371,33 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Плейлист не найден")
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
+
+@app.get("/{path:path}")
+async def catch_all(request: Request, path: str):
+    # Запрещаем доступ к защищенным путям
+    if path.startswith(("admin", "api", "users", "profile", "playlists", "shared")):
+        return templates.TemplateResponse(
+            "error.html", 
+            {
+                "request": request,
+                "status_code": "403",
+                "title": "Доступ запрещён",
+                "message": "У вас нет прав для доступа к этой странице. Эта область защищена и доступна только авторизованным пользователям."
+            }, 
+            status_code=403
+        )
+    # Для всех остальных несуществующих путей - 404
+    return templates.TemplateResponse(
+        "error.html", 
+        {
+            "request": request,
+            "status_code": "404",
+            "title": "Страница не найдена",
+            "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена."
+        }, 
+        status_code=404
+    )
+
 @app.get("/users", response_class=HTMLResponse)
 async def users_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -525,6 +552,98 @@ async def toggle_shared_status(
     return {"message": "Статус общего доступа обновлён"}
 
 if __name__ == "__main__":
+    # Обработчики ошибок
+    @app.exception_handler(400)
+    async def bad_request_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "400",
+                "title": "Некорректный запрос",
+                "message": "Запрос содержит ошибки. Проверьте введённые данные и попробуйте снова."
+            },
+            status_code=400
+        )
+
+    @app.exception_handler(401)
+    async def unauthorized_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "401",
+                "title": "Требуется авторизация",
+                "message": "Для доступа к этой странице необходимо войти в систему."
+            },
+            status_code=401
+        )
+
+    @app.exception_handler(405)
+    async def method_not_allowed_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "405",
+                "title": "Метод не поддерживается",
+                "message": "Метод запроса не поддерживается для этого ресурса."
+            },
+            status_code=405
+        )
+
+    @app.exception_handler(413)
+    async def payload_too_large_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "413",
+                "title": "Файл слишком большой",
+                "message": "Размер файла превышает допустимый лимит. Загрузите файл меньшего размера или разделите плейлист на части."
+            },
+            status_code=413
+        )
+
+    @app.exception_handler(429)
+    async def too_many_requests_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "429",
+                "title": "Слишком много запросов",
+                "message": "Слишком много запросов. Попробуйте через несколько минут."
+            },
+            status_code=429
+        )
+
+    @app.exception_handler(500)
+    async def internal_error_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "500",
+                "title": "Внутренняя ошибка",
+                "message": "Произошла внутренняя ошибка сервера. Администратор уже уведомлен. Попробуйте обновить страницу или вернуться позже."
+            },
+            status_code=500
+        )
+
+    @app.exception_handler(503)
+    async def service_unavailable_handler(request: Request, exc):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "503",
+                "title": "Сервис недоступен",
+                "message": "Сервис временно недоступен. Ведутся технические работы. Попробуйте позже."
+            },
+            status_code=503
+        )
+
     print("=== Загруженные настройки ===")
     print(f"DEBUG: {settings.DEBUG}")
     print(f"APP_HOST: {settings.APP_HOST}")

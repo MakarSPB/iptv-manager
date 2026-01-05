@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    {% include "partials/metadata.html" %}
+    <title>{{ status_code }} - IPTV Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .error-container {
+            text-align: center;
+            padding: 50px 20px;
+            margin: 50px auto;
+            max-width: 800px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .error-image {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .error-title {
+            color: {{ "#dc3545" if status_code.startswith('4') else "#ffc107" if status_code.startswith('5') else "#007bff" }};
+            font-size: 3rem;
+            margin: 20px 0;
+        }
+        
+        .error-message {
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .error-actions {
+            margin: 30px 0;
+        }
+        
+        .btn-home {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-home:hover {
+            background-color: #0056b3;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><strong>IPTV Manager</strong></div>
+        <div class="links">
+            <a href="/">Главная</a>
+            <a href="/playlists">Мои плейлисты</a>
+            <a href="/profile">Профиль</a>
+            {% if user.is_admin %}
+            <a href="/users">Пользователи</a>
+            {% endif %}
+            <a href="/logout">Выход</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="error-container">
+            <h1 class="error-title">{{ status_code }}</h1>
+            <h2>{{ title }}</h2>
+            <p class="error-message">
+                {{ message }}
+            </p>
+            
+            <div class="error-actions">
+                <a href="/" class="btn-home">Вернуться на главную</a>
+                <p class="back-link" onclick="history.back()">← Вернуться назад</p>
+            </div>
+            
+            <img src="/static/404.png" alt="Ошибка" class="error-image">
+        </div>
+    </div>
+
+    <footer style="text-align: center; margin-top: 40px; padding: 10px; font-size: 14px; color: #6c757d;">
+        &copy; 2025
+        <a href="https://github.com/MakarSPB" target="_blank" style="color: #007bff; text-decoration: none;">
+            MakarSPB
+        </a>
+    </footer>
+</body>
+</html>
