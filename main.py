@@ -374,8 +374,12 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
 
 @app.get("/{path:path}")
 async def catch_all(request: Request, path: str):
-    # Запрещаем доступ к защищенным путям
-    if path.startswith(("admin", "api", "users", "profile", "playlists")) and path != "shared":
+    # Список защищенных префиксов
+    protected_prefixes = ["admin", "api", "users", "profile", "playlists"]
+    
+    # Проверяем, начинается ли путь с одного из защищенных префиксов
+    # и не является ли он просто "shared"
+    if any(path.startswith(prefix) for prefix in protected_prefixes) and path != "shared":
         return templates.TemplateResponse(
             "error.html", 
             {
