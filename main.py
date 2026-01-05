@@ -198,9 +198,12 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
     playlists_with_info = []
     for pl in playlists:
         try:
-            channels = parse_m3u(pl.content)
+            # Используем parse_m3u из utils.parser
+            result = parse_m3u(pl.content)
+            channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
-        except Exception:
+        except Exception as e:
+            print(f"Ошибка парсинга плейлиста {pl.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": pl,
@@ -390,9 +393,12 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
     playlists_with_info = []
     for playlist, owner_username in shared_playlists:
         try:
-            channels = parse_m3u(playlist.content)
+            # Используем parse_m3u из utils.parser
+            result = parse_m3u(playlist.content)
+            channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
-        except:
+        except Exception as e:
+            print(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": playlist,
@@ -568,9 +574,12 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
     playlists_with_info = []
     for playlist, owner_username in shared_playlists:
         try:
-            channels = parse_m3u(playlist.content)
+            # Используем parse_m3u из utils.parser
+            result = parse_m3u(playlist.content)
+            channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
-        except:
+        except Exception as e:
+            print(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": playlist,
