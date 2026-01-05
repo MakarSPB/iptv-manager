@@ -375,7 +375,7 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
 @app.get("/{path:path}")
 async def catch_all(request: Request, path: str):
     # Запрещаем доступ к защищенным путям
-    if path.startswith(("admin", "api", "users", "profile", "playlists")):
+    if path.startswith(("admin", "api", "users", "profile", "playlists")) and path != "shared":
         return templates.TemplateResponse(
             "error.html", 
             {
