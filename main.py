@@ -374,11 +374,6 @@ async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
 
 @app.get("/{path:path}")
 async def catch_all(request: Request, path: str):
-    # Разрешаем доступ к публичным страницам
-    if path == "shared":
-        # Даем возможность перенаправиться на login при необходимости
-        return RedirectResponse("/login")
-    
     # Запрещаем доступ к защищенным путям
     if path.startswith(("admin", "api", "users", "profile", "playlists")):
         return templates.TemplateResponse(
