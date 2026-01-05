@@ -99,12 +99,13 @@
 <div class="container">
     <h2>✏️ Редактирование плейлиста</h2>
     <input type="text" id="save-name" placeholder="Название плейлиста" value="Новый плейлист" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
-    <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
 
     <button class="btn btn-edit" onclick="addNewChannel()">➕ Добавить канал</button>
     <button class="btn btn-edit" onclick="importFromText()">📎 Импортировать из текста</button>
 
     <textarea id="import-area" placeholder="Вставьте содержимое M3U сюда..." style="width: 100%; height: 100px; margin: 10px 0; display: none;"></textarea>
+
+    <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 300px; padding: 8px; font-size: 16px; margin-bottom: 10px;">
 
     <table id="channel-table">
         <tr>

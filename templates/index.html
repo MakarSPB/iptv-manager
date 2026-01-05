@@ -72,6 +72,8 @@
             <button class="btn btn-edit" onclick="importFromText()">Импортировать</button>
         </div>
 
+        <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 100%; padding: 8px; margin: 10px 0;">
+
         <table id="channel-table">
             <tr>
                 <th>№</th>
@@ -84,7 +86,6 @@
             </tr>
         </table>
         <input type="text" id="save-name" placeholder="Название плейлиста" value="Мой плейлист">
-        <input type="url" id="tvg-url" placeholder="Ссылка на TV-гид (url-tvg)" style="width: 100%; padding: 8px; margin: 10px 0;">
         <button class="btn btn-edit" onclick="save()">Сохранить</button>
         <button class="btn btn-delete" onclick="cancelEdit()">Отмена</button>
         <p id="result-url"></p>
