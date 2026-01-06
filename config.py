@@ -14,7 +14,8 @@ class Settings:
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin")
     LOG_DIR: str = os.getenv("LOG_DIR", "data/logs")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    LOG_FILE_MAX_SIZE: int = int(os.getenv("LOG_FILE_MAX_SIZE", "10485760"))  # 10MB
+    LOG_FILE_MAX_SIZE_MB: int = int(os.getenv("LOG_FILE_MAX_SIZE_MB", "10"))
+    LOG_FILE_MAX_SIZE: int = LOG_FILE_MAX_SIZE_MB * 1024 * 1024  # Конвертация MB в байты
     LOG_FILE_BACKUP_COUNT: int = int(os.getenv("LOG_FILE_BACKUP_COUNT", "5"))
 
 settings = Settings()

@@ -17,7 +17,7 @@ logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper()))
 # Создаем обработчик для записи в файл с ротацией
 file_handler = RotatingFileHandler(
     os.path.join(settings.LOG_DIR, 'application.log'),
-    maxBytes=settings.LOG_FILE_MAX_SIZE,
+    maxBytes=settings.LOG_FILE_MAX_SIZE,  # Размер в байтах (10485760 = 10MB)
     backupCount=settings.LOG_FILE_BACKUP_COUNT
 )
 file_handler.setLevel(getattr(logging, settings.LOG_LEVEL.upper()))
