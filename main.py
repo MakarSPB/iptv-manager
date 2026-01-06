@@ -616,7 +616,7 @@ if __name__ == "__main__":
     async def catch_all_exceptions(request: Request, call_next):
         try:
             response = await call_next(request)
-            # Если ответ - JSON с деталями ошибки 404, преобразуем в HTML
+            # Преобразуем 404 ошибку в HTML-страницу
             if response.status_code == 404:
                 user = get_current_user_safe(request)
                 return templates.TemplateResponse(
@@ -631,10 +631,10 @@ if __name__ == "__main__":
                     status_code=404
                 )
             return response
-        except Exception as exc:
-            # Обрабатываем необработанные исключения
-            user = get_current_user_safe(request)
-            if isinstance(exc, HTTPException) and exc.status_code == 404:
+        except HTTPException as exc:
+            # Обрабатываем HTTP исключения
+            if exc.status_code == 404:
+                user = get_current_user_safe(request)
                 return templates.TemplateResponse(
                     "error.html",
                     {
@@ -647,6 +647,20 @@ if __name__ == "__main__":
                     status_code=404
                 )
             raise
+        except Exception:
+            # Обрабатываем все остальные исключения
+            user = get_current_user_safe(request)
+            return templates.TemplateResponse(
+                "error.html",
+                {
+                    "request": request,
+                    "status_code": "500",
+                    "title": "Внутренняя ошибка",
+                    "message": "Произошла внутренняя ошибка сервера. Администратор уже уведомлен. Попробуйте обновить страницу или вернуться позже.",
+                    "user": user
+                },
+                status_code=500
+            )
     
     # Обработчики ошибок
     @app.exception_handler(400)
@@ -664,20 +678,7 @@ if __name__ == "__main__":
             status_code=400
         )
 
-    @app.exception_handler(404)
-    async def not_found_handler(request: Request, exc: HTTPException):
-        user = get_current_user_safe(request)
-        return templates.TemplateResponse(
-            "error.html",
-            {
-                "request": request,
-                "status_code": "404",
-                "title": "Страница не найдена",
-                "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
-                "user": user
-            },
-            status_code=404
-        )
+
         
 
 
