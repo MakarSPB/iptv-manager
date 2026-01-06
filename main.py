@@ -402,7 +402,7 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
         try:
             # Используем parse_m3u из utils.parser
             result = parse_m3u(playlist.content)
-            channels = result.get('channels', []) if isinstance(result, dict) else result
+            channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
             channel_count = len(channels)
         except Exception as e:
             logger.error(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
@@ -543,7 +543,7 @@ async def toggle_admin_status(user_id: int, data: dict, request: Request, db: Se
         try:
             # Используем parse_m3u из utils.parser
             result = parse_m3u(playlist.content)
-            channels = result.get('channels', []) if isinstance(result, dict) else result
+            channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
             channel_count = len(channels)
         except Exception as e:
             logger.error(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
