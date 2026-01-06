@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 
+# Импортируем настройки логирования
+from logging_conf import get_logger
+
 from config import settings
 from models import Channel
 from utils.parser import parse_m3u
@@ -23,7 +26,11 @@ from utils.generate_id import generate_short_id
 # Создаем контекст для хэширования паролей
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
+# Создаем экземпляр приложения
 app = FastAPI(title="IPTV Playlist Manager")
+
+# Инициализируем логгер
+logger = get_logger(__name__)
 
 # Инициализация при старте
 init_admin_user()
@@ -203,7 +210,7 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
             channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
         except Exception as e:
-            print(f"Ошибка парсинга плейлиста {pl.id}: {str(e)}")
+            logger.error(f"Ошибка парсинга плейлиста {pl.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": pl,
@@ -398,7 +405,7 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
             channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
         except Exception as e:
-            print(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
+            logger.error(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": playlist,
@@ -553,7 +560,7 @@ async def shared_playlists_page(request: Request, db: Session = Depends(get_db))
             channels = result.get('channels', []) if isinstance(result, dict) else result
             channel_count = len(channels)
         except Exception as e:
-            print(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
+            logger.error(f"Ошибка парсинга плейлиста {playlist.id}: {str(e)}")
             channel_count = 0
         playlists_with_info.append({
             "playlist": playlist,
@@ -678,13 +685,15 @@ if __name__ == "__main__":
             status_code=503
         )
 
-    print("=== Загруженные настройки ===")
-    print(f"DEBUG: {settings.DEBUG}")
-    print(f"APP_HOST: {settings.APP_HOST}")
-    print(f"APP_PORT: {settings.APP_PORT}")
-    print(f"ADMIN_USERNAME: {settings.ADMIN_USERNAME}")
-    print(f"PLAYLISTS_DIR: {settings.PLAYLISTS_DIR}")
-    print("==============================")
+    logger.info("=== Загруженные настройки ===")
+    logger.info(f"DEBUG: {settings.DEBUG}")
+    logger.info(f"APP_HOST: {settings.APP_HOST}")
+    logger.info(f"APP_PORT: {settings.APP_PORT}")
+    logger.info(f"ADMIN_USERNAME: {settings.ADMIN_USERNAME}")
+    logger.info(f"PLAYLISTS_DIR: {settings.PLAYLISTS_DIR}")
+    logger.info(f"LOG_DIR: {settings.LOG_DIR}")
+    logger.info(f"LOG_LEVEL: {settings.LOG_LEVEL}")
+    logger.info("==============================")
 
     uvicorn.run(
         "main:app",
