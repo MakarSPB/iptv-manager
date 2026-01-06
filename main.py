@@ -207,7 +207,7 @@ async def my_playlists(request: Request, db: Session = Depends(get_db)):
         try:
             # Используем parse_m3u из utils.parser
             result = parse_m3u(pl.content)
-            channels = result.get('channels', []) if isinstance(result, dict) else result
+            channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
             channel_count = len(channels)
         except Exception as e:
             logger.error(f"Ошибка парсинга плейлиста {pl.id}: {str(e)}")
@@ -262,7 +262,8 @@ async def upload_playlist(
 
     content = await file.read()
     try:
-        channels = parse_m3u(content.decode("utf-8", errors="ignore"))
+        result = parse_m3u(content.decode("utf-8", errors="ignore"))
+        channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
 
@@ -276,12 +277,14 @@ async def edit_playlist(playlist_id: str, db: Session = Depends(get_db), user: U
 
     try:
         result = parse_m3u(playlist.content)
+        channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
+        tvg_url = result.get('tvg_url', '') if isinstance(result, dict) else ''
         return {
             "id": playlist.id,
             "name": playlist.name,
             "filename": playlist.filename,
-            "channels": result['channels'],
-            "tvg_url": result['tvg_url']
+            "channels": channels,
+            "tvg_url": tvg_url
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка парсинга плейлиста: {str(e)}")
@@ -325,7 +328,8 @@ async def parse_text(data: dict):
     if not content.strip():
         raise HTTPException(status_code=400, detail="Пустой контент")
     try:
-        channels = parse_m3u(content)
+        result = parse_m3u(content)
+        channels = result.get('channels', []) if isinstance(result, dict) and 'channels' in result else []
         return {"channels": channels}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка парсинга: {str(e)}")
