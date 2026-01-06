@@ -393,8 +393,8 @@ async def serve_playlist_root(playlist_id: str, request: Request, db: Session = 
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 
-# @app.get("/shared", response_class=HTMLResponse)
-# async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+@app.get("/shared", response_class=HTMLResponse)
+async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -548,8 +548,8 @@ async def toggle_admin_status(user_id: int, data: dict, request: Request, db: Se
     db.commit()
     return {"message": "Статус администратора обновлён"}
 
-# @app.get("/shared", response_class=HTMLResponse)
-# async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+@app.get("/shared", response_class=HTMLResponse)
+async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
