@@ -29,6 +29,9 @@ pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 # Создаем экземпляр приложения
 app = FastAPI(title="IPTV Playlist Manager", exception_handlers={})
 
+# Создаем экземпляр приложения для middleware
+app.middleware_stack = None
+
 # Инициализируем логгер
 logger = get_logger(__name__)
 
@@ -619,18 +622,12 @@ if __name__ == "__main__":
         try:
             # Устанавливаем заголовок Accept для приоритета HTML
             if "Accept" not in request.headers:
-                request.headers.__dict__["_list"].append(
-                    (b"accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                )
+                request.headers.__dict__["_list"] = [(b"accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")]
             
             response = await call_next(request)
             
-            # Если получили JSON с 404, пытаемся преобразовать в HTML
+            # Если получили 404, преобразуем в HTML
             if response.status_code == 404:
-                # Проверяем, не является ли ответ уже HTML
-                if "text/html" in str(response.media_type).lower():
-                    return response
-                
                 user = get_current_user_safe(request)
                 return templates.TemplateResponse(
                     "error.html",
@@ -662,11 +659,11 @@ if __name__ == "__main__":
                     status_code=404
                 )
             
-            # Для других ошибок используем стандартный обработчик
+            # Для других ошибок поднимаем исключение
             raise
     
     # Обработчики ошибок
-    # Все обработчики ошибок реализованы через middleware для приоритета
+    # Все обработчики ошибок отключены, так как обрабатываются middleware
     pass
 
 
