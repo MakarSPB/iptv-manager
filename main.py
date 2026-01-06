@@ -375,15 +375,26 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/{playlist_id}.m3u")
-async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
+async def serve_playlist_root(playlist_id: str, request: Request, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
-        raise HTTPException(status_code=404, detail="Плейлист не найден")
+        user = get_current_user(request)
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "404",
+                "title": "Плейлист не найден",
+                "message": "Запрашиваемый плейлист не существует или был удален.",
+                "user": user
+            },
+            status_code=404
+        )
     return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 
-@app.get("/shared", response_class=HTMLResponse)
-async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+# @app.get("/shared", response_class=HTMLResponse)
+# async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -537,8 +548,8 @@ async def toggle_admin_status(user_id: int, data: dict, request: Request, db: Se
     db.commit()
     return {"message": "Статус администратора обновлён"}
 
-@app.get("/shared", response_class=HTMLResponse)
-async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
+# @app.get("/shared", response_class=HTMLResponse)
+# async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login")
@@ -614,6 +625,21 @@ if __name__ == "__main__":
                 "user": user
             },
             status_code=400
+        )
+
+    @app.exception_handler(404)
+    async def not_found_handler(request: Request, exc: HTTPException):
+        user = get_current_user_safe(request)
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "status_code": "404",
+                "title": "Страница не найдена",
+                "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
+                "user": user
+            },
+            status_code=404
         )
 
     @app.exception_handler(401)
