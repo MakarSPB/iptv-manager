@@ -611,6 +611,43 @@ if __name__ == "__main__":
         except:
             return None
     
+    # Глобальный обработчик для всех маршрутов
+    @app.middleware("http")
+    async def catch_all_exceptions(request: Request, call_next):
+        try:
+            response = await call_next(request)
+            # Если ответ - JSON с деталями ошибки 404, преобразуем в HTML
+            if response.status_code == 404:
+                user = get_current_user_safe(request)
+                return templates.TemplateResponse(
+                    "error.html",
+                    {
+                        "request": request,
+                        "status_code": "404",
+                        "title": "Страница не найдена",
+                        "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
+                        "user": user
+                    },
+                    status_code=404
+                )
+            return response
+        except Exception as exc:
+            # Обрабатываем необработанные исключения
+            user = get_current_user_safe(request)
+            if isinstance(exc, HTTPException) and exc.status_code == 404:
+                return templates.TemplateResponse(
+                    "error.html",
+                    {
+                        "request": request,
+                        "status_code": "404",
+                        "title": "Страница не найдена",
+                        "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
+                        "user": user
+                    },
+                    status_code=404
+                )
+            raise
+    
     # Обработчики ошибок
     @app.exception_handler(400)
     async def bad_request_handler(request: Request, exc):
@@ -642,23 +679,7 @@ if __name__ == "__main__":
             status_code=404
         )
         
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException):
-        if exc.status_code == 404:
-            user = get_current_user_safe(request)
-            return templates.TemplateResponse(
-                "error.html",
-                {
-                    "request": request,
-                    "status_code": "404",
-                    "title": "Страница не найдена",
-                    "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
-                    "user": user
-                },
-                status_code=404
-            )
-        # Для других HTTP исключений используем стандартный обработчик
-        raise exc
+
 
     @app.exception_handler(401)
     async def unauthorized_handler(request: Request, exc):
