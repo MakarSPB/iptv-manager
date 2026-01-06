@@ -27,7 +27,7 @@ from utils.generate_id import generate_short_id
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 # Создаем экземпляр приложения
-app = FastAPI(title="IPTV Playlist Manager")
+app = FastAPI(title="IPTV Playlist Manager", exception_handlers={})
 
 # Инициализируем логгер
 logger = get_logger(__name__)
@@ -390,7 +390,9 @@ async def serve_playlist_root(playlist_id: str, request: Request, db: Session = 
             },
             status_code=404
         )
-    return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
+    # Устанавливаем заголовок Content-Type для правильного отображения в браузере
+    headers = {"Content-Type": "application/vnd.apple.mpegurl"}
+    return HTMLResponse(content=playlist.content, headers=headers)
 
 
 @app.get("/shared", response_class=HTMLResponse)
@@ -615,9 +617,20 @@ if __name__ == "__main__":
     @app.middleware("http")
     async def catch_all_exceptions(request: Request, call_next):
         try:
+            # Устанавливаем заголовок Accept для приоритета HTML
+            if "Accept" not in request.headers:
+                request.headers.__dict__["_list"].append(
+                    (b"accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                )
+            
             response = await call_next(request)
-            # Преобразуем 404 ошибку в HTML-страницу
+            
+            # Если получили JSON с 404, пытаемся преобразовать в HTML
             if response.status_code == 404:
+                # Проверяем, не является ли ответ уже HTML
+                if "text/html" in str(response.media_type).lower():
+                    return response
+                
                 user = get_current_user_safe(request)
                 return templates.TemplateResponse(
                     "error.html",
@@ -631,10 +644,12 @@ if __name__ == "__main__":
                     status_code=404
                 )
             return response
-        except HTTPException as exc:
-            # Обрабатываем HTTP исключения
-            if exc.status_code == 404:
-                user = get_current_user_safe(request)
+        except Exception as exc:
+            # Обрабатываем все исключения
+            user = get_current_user_safe(request)
+            
+            # Для HTTPException 404 возвращаем HTML
+            if isinstance(exc, HTTPException) and exc.status_code == 404:
                 return templates.TemplateResponse(
                     "error.html",
                     {
@@ -646,37 +661,13 @@ if __name__ == "__main__":
                     },
                     status_code=404
                 )
+            
+            # Для других ошибок используем стандартный обработчик
             raise
-        except Exception:
-            # Обрабатываем все остальные исключения
-            user = get_current_user_safe(request)
-            return templates.TemplateResponse(
-                "error.html",
-                {
-                    "request": request,
-                    "status_code": "500",
-                    "title": "Внутренняя ошибка",
-                    "message": "Произошла внутренняя ошибка сервера. Администратор уже уведомлен. Попробуйте обновить страницу или вернуться позже.",
-                    "user": user
-                },
-                status_code=500
-            )
     
     # Обработчики ошибок
-    @app.exception_handler(400)
-    async def bad_request_handler(request: Request, exc):
-        user = get_current_user_safe(request)
-        return templates.TemplateResponse(
-            "error.html",
-            {
-                "request": request,
-                "status_code": "400",
-                "title": "Некорректный запрос",
-                "message": "Запрос содержит ошибки. Проверьте введённые данные и попробуйте снова.",
-                "user": user
-            },
-            status_code=400
-        )
+    # Все обработчики ошибок реализованы через middleware для приоритета
+    pass
 
 
         
