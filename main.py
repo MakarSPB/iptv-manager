@@ -27,10 +27,7 @@ from utils.generate_id import generate_short_id
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 # Создаем экземпляр приложения
-app = FastAPI(title="IPTV Playlist Manager", exception_handlers={})
-
-# Создаем экземпляр приложения для middleware
-app.middleware_stack = None
+app = FastAPI(title="IPTV Playlist Manager")
 
 # Инициализируем логгер
 logger = get_logger(__name__)
@@ -378,24 +375,11 @@ async def new_playlist_page(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/{playlist_id}.m3u")
-async def serve_playlist_root(playlist_id: str, request: Request, db: Session = Depends(get_db)):
+async def serve_playlist_root(playlist_id: str, db: Session = Depends(get_db)):
     playlist = db.query(Playlist).filter(Playlist.id == playlist_id).first()
     if not playlist:
-        user = get_current_user(request)
-        return templates.TemplateResponse(
-            "error.html",
-            {
-                "request": request,
-                "status_code": "404",
-                "title": "Плейлист не найден",
-                "message": "Запрашиваемый плейлист не существует или был удален.",
-                "user": user
-            },
-            status_code=404
-        )
-    # Устанавливаем заголовок Content-Type для правильного отображения в браузере
-    headers = {"Content-Type": "application/vnd.apple.mpegurl"}
-    return HTMLResponse(content=playlist.content, headers=headers)
+        raise HTTPException(status_code=404, detail="Плейлист не найден")
+    return HTMLResponse(content=playlist.content, media_type="audio/mpegurl")
 
 
 @app.get("/shared", response_class=HTMLResponse)
@@ -553,20 +537,6 @@ async def toggle_admin_status(user_id: int, data: dict, request: Request, db: Se
     db.commit()
     return {"message": "Статус администратора обновлён"}
 
-@app.get("/shared", response_class=HTMLResponse)
-async def shared_playlists_page(request: Request, db: Session = Depends(get_db)):
-    user = get_current_user(request, db)
-    if not user:
-        return RedirectResponse("/login")
-
-    # Получаем все плейлисты, отмеченные как общие
-    shared_playlists = (
-        db.query(Playlist, User.username.label("owner_username"))
-        .join(User, Playlist.owner_id == User.id)
-        .filter(Playlist.is_shared == True)
-        .all()
-    )
-
     # Добавляем количество каналов
     playlists_with_info = []
     for playlist, owner_username in shared_playlists:
@@ -609,81 +579,9 @@ async def toggle_shared_status(
     return {"message": "Статус общего доступа обновлён"}
 
 if __name__ == "__main__":
-    # Получаем текущего пользователя
-    def get_current_user_safe(request: Request):
-        try:
-            return get_current_user(request)
-        except:
-            return None
-    
-    # Глобальный обработчик для всех маршрутов
-    @app.middleware("http")
-    async def catch_all_exceptions(request: Request, call_next):
-        try:
-            # Устанавливаем заголовок Accept для приоритета HTML
-            if "Accept" not in request.headers:
-                request.headers.__dict__["_list"] = [(b"accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")]
-            
-            response = await call_next(request)
-            
-            # Если получили 404, преобразуем в HTML
-            if response.status_code == 404:
-                user = get_current_user_safe(request)
-                return templates.TemplateResponse(
-                    "error.html",
-                    {
-                        "request": request,
-                        "status_code": "404",
-                        "title": "Страница не найдена",
-                        "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
-                        "user": user
-                    },
-                    status_code=404
-                )
-            return response
-        except Exception as exc:
-            # Обрабатываем все исключения
-            user = get_current_user_safe(request)
-            
-            # Для HTTPException 404 возвращаем HTML
-            if isinstance(exc, HTTPException) and exc.status_code == 404:
-                return templates.TemplateResponse(
-                    "error.html",
-                    {
-                        "request": request,
-                        "status_code": "404",
-                        "title": "Страница не найдена",
-                        "message": "К сожалению, страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
-                        "user": user
-                    },
-                    status_code=404
-                )
-            
-            # Для других ошибок поднимаем исключение
-            raise
-    
-    # Обработчики ошибок
-    # Все обработчики ошибок отключены, так как обрабатываются middleware
+    # Удаляем все пользовательские обработчики ошибок и middleware
+    # Оставляем стандартное поведение FastAPI
     pass
-
-
-        
-
-
-    @app.exception_handler(401)
-    async def unauthorized_handler(request: Request, exc):
-        user = get_current_user_safe(request)
-        return templates.TemplateResponse(
-            "error.html",
-            {
-                "request": request,
-                "status_code": "401",
-                "title": "Требуется авторизация",
-                "message": "Для доступа к этой странице необходимо войти в систему.",
-                "user": user
-            },
-            status_code=401
-        )
 
     @app.exception_handler(405)
     async def method_not_allowed_handler(request: Request, exc):
