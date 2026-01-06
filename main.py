@@ -593,94 +593,115 @@ async def toggle_shared_status(
     return {"message": "Статус общего доступа обновлён"}
 
 if __name__ == "__main__":
+    # Получаем текущего пользователя
+    def get_current_user_safe(request: Request):
+        try:
+            return get_current_user(request)
+        except:
+            return None
+    
     # Обработчики ошибок
     @app.exception_handler(400)
     async def bad_request_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "400",
                 "title": "Некорректный запрос",
-                "message": "Запрос содержит ошибки. Проверьте введённые данные и попробуйте снова."
+                "message": "Запрос содержит ошибки. Проверьте введённые данные и попробуйте снова.",
+                "user": user
             },
             status_code=400
         )
 
     @app.exception_handler(401)
     async def unauthorized_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "401",
                 "title": "Требуется авторизация",
-                "message": "Для доступа к этой странице необходимо войти в систему."
+                "message": "Для доступа к этой странице необходимо войти в систему.",
+                "user": user
             },
             status_code=401
         )
 
     @app.exception_handler(405)
     async def method_not_allowed_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "405",
                 "title": "Метод не поддерживается",
-                "message": "Метод запроса не поддерживается для этого ресурса."
+                "message": "Метод запроса не поддерживается для этого ресурса.",
+                "user": user
             },
             status_code=405
         )
 
     @app.exception_handler(413)
     async def payload_too_large_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "413",
                 "title": "Файл слишком большой",
-                "message": "Размер файла превышает допустимый лимит. Загрузите файл меньшего размера или разделите плейлист на части."
+                "message": "Размер файла превышает допустимый лимит. Загрузите файл меньшего размера или разделите плейлист на части.",
+                "user": user
             },
             status_code=413
         )
 
     @app.exception_handler(429)
     async def too_many_requests_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "429",
                 "title": "Слишком много запросов",
-                "message": "Слишком много запросов. Попробуйте через несколько минут."
+                "message": "Слишком много запросов. Попробуйте через несколько минут.",
+                "user": user
             },
             status_code=429
         )
 
     @app.exception_handler(500)
     async def internal_error_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "500",
                 "title": "Внутренняя ошибка",
-                "message": "Произошла внутренняя ошибка сервера. Администратор уже уведомлен. Попробуйте обновить страницу или вернуться позже."
+                "message": "Произошла внутренняя ошибка сервера. Администратор уже уведомлен. Попробуйте обновить страницу или вернуться позже.",
+                "user": user
             },
             status_code=500
         )
 
     @app.exception_handler(503)
     async def service_unavailable_handler(request: Request, exc):
+        user = get_current_user_safe(request)
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
                 "status_code": "503",
                 "title": "Сервис недоступен",
-                "message": "Сервис временно недоступен. Ведутся технические работы. Попробуйте позже."
+                "message": "Сервис временно недоступен. Ведутся технические работы. Попробуйте позже.",
+                "user": user
             },
             status_code=503
         )
